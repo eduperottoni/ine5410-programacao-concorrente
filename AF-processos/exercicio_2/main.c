@@ -30,6 +30,8 @@ int create_grandson() {
         sleep(5);
         printf("Processo %d finalizado\n", getpid());
         exit(0);
+    } else if (pid < 0) {
+        printf("Erro na criação do processo\n");
     }
 
     return pid;
@@ -50,13 +52,10 @@ int create_son() {
         while(wait(NULL) >= 0);
         printf("Processo %d finalizado\n", getpid());
         exit(0);
-    } 
+    }
 
     return pid;
 }
-
-
-
 
 int main(int argc, char** argv) {
 
@@ -73,8 +72,8 @@ int main(int argc, char** argv) {
 
     if (pid > 0) { // processo pai
         pid_t pid = create_son();
-            while(wait(NULL) >= 0);
-            printf("Processo principal %d finalizado\n", getpid());
+        while(wait(NULL) >= 0);
+        printf("Processo principal %d finalizado\n", getpid());
     }
     
     return 0;
