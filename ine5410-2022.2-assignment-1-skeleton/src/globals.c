@@ -13,9 +13,49 @@
     2.  SIGA OS EXEMPLOS DE VARIÁVEIS GLOBAIS JÁ EXISTENTES NESSE ARQUIVO PARA CRIAR AS NOVAS.
 */
 
+/* VARIÁVEIS GLOBAIS CRIADAS */
+
+dishes_info_t* global_dishes_info = NULL;
+int* global_served_costumers = NULL;
+
 virtual_clock_t* global_virtual_clock = NULL;
 conveyor_belt_t* global_conveyor_belt = NULL;
 queue_t* global_queue = NULL;
+
+void globals_set_dishes_info(dishes_info_t* dishes_info) {
+    global_dishes_info = dishes_info;
+}
+
+dishes_info_t* globals_get_dishes_info() {
+    return global_dishes_info;
+}
+
+dishes_info_t* dishes_info_init(int menu_size) {
+    dishes_info_t* self = malloc(sizeof(dishes_info_t));
+    if (self == NULL) {
+        fprintf(stdout, RED "[ERROR] Bad malloc() at `dishes_info_t* dishes_info_init()`.\n" NO_COLOR);
+        exit(EXIT_FAILURE);
+    }
+    self -> consumed_dishes = (int*) malloc(sizeof(int)* menu_size);
+    self -> prepared_dishes = (int*) malloc(sizeof(int)* menu_size);
+    for (int i=0; i < menu_size; i++) {
+        self -> prepared_dishes[i] = 0;
+        self -> consumed_dishes[i] = 0;
+    }
+    return self;
+}
+
+void dishes_info_finalize(dishes_info_t* self) {
+    free(self);
+}
+
+void globals_set_served_costumers() {
+    *global_served_costumers = 0;
+}
+
+int* globals_get_served_costumers() {
+    return global_served_costumers;
+}
 
 void globals_set_virtual_clock(virtual_clock_t* virtual_clock) {
     global_virtual_clock = virtual_clock;
@@ -49,4 +89,5 @@ queue_t* globals_get_queue() {
 void globals_finalize() {
     virtual_clock_finalize(global_virtual_clock);
     conveyor_belt_finalize(global_conveyor_belt);
+    dishes_info_finalize(global_dishes_info);
 }

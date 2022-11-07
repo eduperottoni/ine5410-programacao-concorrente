@@ -48,6 +48,57 @@ extern void globals_set_queue(queue_t *queue);
  */
 extern queue_t *globals_get_queue();
 
+/* VARIÁVEIS GLOBAIS CRIADAS*/
+
+/**
+ * @brief Inicia contador de clientes servidos (de modo global)
+ * 
+ * @param counter
+ */
+extern void globals_set_served_costumers();
+
+/**
+ * @brief Retorna ponteiro para o contador de cientes servidos
+ * 
+ * @return int* 
+ */
+extern int* globals_get_served_costumers();
+
+/**
+ * @brief Informações sobre pratos preparados e consumidos
+*/
+typedef struct dishes_info {
+    int* prepared_dishes;
+    int* consumed_dishes;
+} dishes_info_t;
+
+/**
+ * @brief Inicia informações sobre pratos preparados e consumidos
+ * 
+ * @param counter
+ */
+void globals_set_dishes_info(dishes_info_t *dishes_info);
+
+/**
+ * @brief Retorna ponteiro para informações de pratos preparados e consumidos
+ * 
+ * @return dishes_info_t* 
+ */
+extern dishes_info_t* globals_get_dishes_info();
+
+/**
+ * @brief Cria variável do tipo dishes_info_t com malloc
+ * 
+ * @return dishes_info_t* 
+ */
+dishes_info_t* dishes_info_init(int menu_size);
+
+/**
+ * @brief Finaliza dishes_info com free()
+*/
+void dishes_info_finalize(dishes_info_t* self);
+
+
 /**
  * @brief Finaliza todas as variáveis globais.
  * 

@@ -24,6 +24,7 @@ void* sushi_chef_run(void* arg) {
         enum menu_item next_dish = rand() % 5;
         sushi_chef_prepare_food(self, next_dish);
         sushi_chef_place_food(self, next_dish);
+        /* INCREMENTAR VARIÁVEL CONTADORA DA COMIDA */
     }
 
     pthread_exit(NULL);
@@ -92,6 +93,8 @@ void sushi_chef_place_food(sushi_chef_t* self, enum menu_item dish) {
     fprintf(stdout, GREEN "[INFO]" NO_COLOR " Sushi Chef %d wants to place %u at conveyor->_foot_slot[%d]!\n", self->_id, dish, self->_seat_position);
 
     /* INSIRA SUA LÓGICA AQUI */
+
+    
 
     conveyor_belt->_food_slots[self->_seat_position] = dish;
     print_virtual_time(globals_get_virtual_clock());
