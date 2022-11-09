@@ -15,7 +15,7 @@ void* sushi_chef_run(void* arg) {
         3.  VOCÊ DEVE ADICIONAR A LÓGICA PARA QUE O SUSHI CHEF PARE DE ADICIONAR PRATOS E SAIA DA 
             ESTEIRA QUANDO O SUSHI SHOP FECHAR (VEJA O ARQUIVO `virtual_clock.c`).
         4.  CUIDADO COM ERROS DE CONCORRÊNCIA.
-    */ 
+    */
     sushi_chef_t* self = (sushi_chef_t*) arg;
     virtual_clock_t* global_clock = globals_get_virtual_clock();
 
@@ -92,20 +92,31 @@ void sushi_chef_place_food(sushi_chef_t* self, enum menu_item dish) {
     print_virtual_time(globals_get_virtual_clock());
     fprintf(stdout, GREEN "[INFO]" NO_COLOR " Sushi Chef %d wants to place %u at conveyor->_foot_slot[%d]!\n", self->_id, dish, self->_seat_position);
 
-    /* INSIRA SUA LÓGICA AQUI */
-
     
+    
+    /* INSIRA SUA LÓGICA AQUI */
+    pthread_mutex_lock(&(conveyor_belt -> _food_slots_mutex));
+    while (conveyor_belt -> _food_slots[self ->_seat_position] != -1) {
+        printf("Occuped!");
+        pthread_mutex_unlock(&(conveyor_belt -> _food_slots_mutex));
+    }
+    pthread_mutex_unlock(&(conveyor_belt -> _food_slots_mutex));
 
+    pthread_mutex_lock(&(conveyor_belt -> _food_slots_mutex));
+    printf("O LOCAL ESTÁ VAZIO");
+    /* PROTEGER LINHA ABAIXO */
     conveyor_belt->_food_slots[self->_seat_position] = dish;
     print_virtual_time(globals_get_virtual_clock());
     fprintf(stdout, GREEN "[INFO]" NO_COLOR " Sushi Chef %d placed %u at conveyor->_foot_slot[%d]!\n", self->_id, dish, self->_seat_position);
+    pthread_mutex_unlock(&(conveyor_belt -> _food_slots_mutex));
+    /* WAIT NO SEMÁFORO VAZIO -> DECREMENTA */
 
     /* INSIRA SUA LÓGICA AQUI */
-
 }
 
 void sushi_chef_prepare_food(sushi_chef_t* self, enum menu_item menu_item) {
     /* NÃO EDITE O CONTEÚDO DESSA FUNÇÃO */
+
     virtual_clock_t* global_clock = globals_get_virtual_clock();
     switch (menu_item) {
         case Sushi:
