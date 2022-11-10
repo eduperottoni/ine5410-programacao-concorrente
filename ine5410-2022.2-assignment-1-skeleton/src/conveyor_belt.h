@@ -2,6 +2,7 @@
 #define __CONVEYOR_BELT_H__
 
 #include <pthread.h>
+#include <semaphore.h>
 #include "args.h"
 
 
@@ -21,6 +22,8 @@ typedef struct conveyor_belt {
     int* _food_slots;
     pthread_mutex_t _seats_mutex;
     pthread_mutex_t _food_slots_mutex;
+    /*ADICIONADO*/
+    sem_t _empty_slots_sem, _full_slots_sem;
     pthread_t thread;
 } conveyor_belt_t;
 

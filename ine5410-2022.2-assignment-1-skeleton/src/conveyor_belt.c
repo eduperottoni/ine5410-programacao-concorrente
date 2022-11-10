@@ -49,6 +49,9 @@ conveyor_belt_t* conveyor_belt_init(config_t* config) {
     }
     pthread_mutex_init(&self->_seats_mutex, NULL);
     pthread_mutex_init(&self->_food_slots_mutex, NULL);
+    // Adicionados
+    sem_init(&self->_empty_slots_sem, 0, self->_size);
+    sem_init(&self->_full_slots_sem, 0, 0);
     pthread_create(&self->thread, NULL, conveyor_belt_run, (void *) self);
     print_conveyor_belt(self);
     return self;
@@ -59,6 +62,8 @@ void conveyor_belt_finalize(conveyor_belt_t* self) {
     pthread_join(self->thread, NULL);
     pthread_mutex_destroy(&self->_seats_mutex);
     pthread_mutex_destroy(&self->_food_slots_mutex);
+    sem_destroy(&self->_empty_slots_sem);
+    sem_destroy(&self->_full_slots_sem);
     free(self);
 }
 

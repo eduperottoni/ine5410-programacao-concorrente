@@ -89,28 +89,36 @@ void sushi_chef_place_food(sushi_chef_t* self, enum menu_item dish) {
         5.  NÃO REMOVA OS PRINTS
     */ 
     conveyor_belt_t* conveyor_belt = globals_get_conveyor_belt();
+    dishes_info_t* dishes_info = globals_get_dishes_info();
     print_virtual_time(globals_get_virtual_clock());
     fprintf(stdout, GREEN "[INFO]" NO_COLOR " Sushi Chef %d wants to place %u at conveyor->_foot_slot[%d]!\n", self->_id, dish, self->_seat_position);
 
-    
-    
+
     /* INSIRA SUA LÓGICA AQUI */
     pthread_mutex_lock(&(conveyor_belt -> _food_slots_mutex));
-    while (conveyor_belt -> _food_slots[self ->_seat_position] != -1) {
-        printf("Occuped!");
+    while (conveyor_belt -> _food_slots[self -> _seat_position] != -1) {
         pthread_mutex_unlock(&(conveyor_belt -> _food_slots_mutex));
     }
+
     pthread_mutex_unlock(&(conveyor_belt -> _food_slots_mutex));
 
     pthread_mutex_lock(&(conveyor_belt -> _food_slots_mutex));
-    printf("O LOCAL ESTÁ VAZIO");
-    /* PROTEGER LINHA ABAIXO */
-    conveyor_belt->_food_slots[self->_seat_position] = dish;
+    /* WAIT NO SEMÁFORO VAZIO -> DECREMENTA */
+    sem_wait(&(conveyor_belt -> _empty_slots_sem));
+
+    //Proteger linha abaixo
+    conveyor_belt -> _food_slots[self -> _seat_position] = dish;
+
+    //Incrementa variável global
+    dishes_info -> prepared_dishes[dish]++;
+
     print_virtual_time(globals_get_virtual_clock());
     fprintf(stdout, GREEN "[INFO]" NO_COLOR " Sushi Chef %d placed %u at conveyor->_foot_slot[%d]!\n", self->_id, dish, self->_seat_position);
+    
+    //Post no semáforo cheio -> incrementa
+    sem_post(&(conveyor_belt -> _full_slots_sem));
+    
     pthread_mutex_unlock(&(conveyor_belt -> _food_slots_mutex));
-    /* WAIT NO SEMÁFORO VAZIO -> DECREMENTA */
-
     /* INSIRA SUA LÓGICA AQUI */
 }
 
