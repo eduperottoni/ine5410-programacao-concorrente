@@ -17,10 +17,19 @@
 
 dishes_info_t* global_dishes_info = NULL;
 int* global_served_costumers = NULL;
+unsigned int global_opened_restaurant = 1;
 
 virtual_clock_t* global_virtual_clock = NULL;
 conveyor_belt_t* global_conveyor_belt = NULL;
 queue_t* global_queue = NULL;
+
+unsigned int globals_get_opened_restaurant() {
+    return global_opened_restaurant;
+}
+
+void globals_set_opened_restaurant(int opened) {
+    global_opened_restaurant = opened;
+}
 
 void globals_set_dishes_info(dishes_info_t* dishes_info) {
     global_dishes_info = dishes_info;

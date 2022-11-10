@@ -20,13 +20,12 @@ void* sushi_chef_run(void* arg) {
     virtual_clock_t* global_clock = globals_get_virtual_clock();
 
     sushi_chef_seat(self);
-    while (TRUE) {
+    while (globals_get_opened_restaurant()) {
         enum menu_item next_dish = rand() % 5;
         sushi_chef_prepare_food(self, next_dish);
         sushi_chef_place_food(self, next_dish);
-        /* INCREMENTAR VARIÁVEL CONTADORA DA COMIDA */
     }
-
+    sushi_chef_leave(self);
     pthread_exit(NULL);
 }
 
@@ -73,6 +72,10 @@ void sushi_chef_leave(sushi_chef_t* self) {
     conveyor_belt_t* conveyor = globals_get_conveyor_belt();
 
     /* INSIRA SUA LÓGICA AQUI */
+    pthread_mutex_lock(&conveyor->_seats_mutex);
+    conveyor->_seats[self->_seat_position] = -1;
+    pthread_mutex_unlock(&conveyor->_seats_mutex);
+
     
     print_virtual_time(globals_get_virtual_clock());
     fprintf(stdout, GREEN "[INFO]" NO_COLOR " Sushi Chef %d seated at conveyor->_seats[%d] stopped cooking and left the shop!\n", self->_id, self->_seat_position);    
@@ -93,8 +96,8 @@ void sushi_chef_place_food(sushi_chef_t* self, enum menu_item dish) {
     print_virtual_time(globals_get_virtual_clock());
     fprintf(stdout, GREEN "[INFO]" NO_COLOR " Sushi Chef %d wants to place %u at conveyor->_foot_slot[%d]!\n", self->_id, dish, self->_seat_position);
 
-
     /* INSIRA SUA LÓGICA AQUI */
+
     pthread_mutex_lock(&(conveyor_belt -> _food_slots_mutex));
     while (conveyor_belt -> _food_slots[self -> _seat_position] != -1) {
         pthread_mutex_unlock(&(conveyor_belt -> _food_slots_mutex));
@@ -102,9 +105,9 @@ void sushi_chef_place_food(sushi_chef_t* self, enum menu_item dish) {
 
     pthread_mutex_unlock(&(conveyor_belt -> _food_slots_mutex));
 
-    pthread_mutex_lock(&(conveyor_belt -> _food_slots_mutex));
-    /* WAIT NO SEMÁFORO VAZIO -> DECREMENTA */
+    //Wait no semáforo vazio -> se estiver cheio, bloqueia a thread
     sem_wait(&(conveyor_belt -> _empty_slots_sem));
+    pthread_mutex_lock(&(conveyor_belt -> _food_slots_mutex));
 
     //Proteger linha abaixo
     conveyor_belt -> _food_slots[self -> _seat_position] = dish;
@@ -115,11 +118,10 @@ void sushi_chef_place_food(sushi_chef_t* self, enum menu_item dish) {
     print_virtual_time(globals_get_virtual_clock());
     fprintf(stdout, GREEN "[INFO]" NO_COLOR " Sushi Chef %d placed %u at conveyor->_foot_slot[%d]!\n", self->_id, dish, self->_seat_position);
     
+    pthread_mutex_unlock(&(conveyor_belt -> _food_slots_mutex));
+    
     //Post no semáforo cheio -> incrementa
     sem_post(&(conveyor_belt -> _full_slots_sem));
-    
-    pthread_mutex_unlock(&(conveyor_belt -> _food_slots_mutex));
-    /* INSIRA SUA LÓGICA AQUI */
 }
 
 void sushi_chef_prepare_food(sushi_chef_t* self, enum menu_item menu_item) {

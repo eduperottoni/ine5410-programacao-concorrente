@@ -21,11 +21,45 @@ void* customer_run(void* arg) {
             SAIR IMEDIATAMENTE DA ESTEIRA.
         8.  LEMBRE-SE DE TOMAR CUIDADO COM ERROS DE CONCORRÊNCIA!
     */ 
+
+
     customer_t* self = (customer_t*) arg;
+    conveyor_belt_t* conveyor = globals_get_conveyor_belt();
 
     /* INSIRA SUA LÓGICA AQUI */
-    
-    msleep(1000000);  // REMOVA ESTE SLEEP APÓS IMPLEMENTAR SUA SOLUÇÃO!
+    while(self -> _seat_position == -1); //espera até ser colocado em um assento (seat_position != -1)
+    for (int i = 0; i < 5; i++)
+        printf("DESEJO %d = %d\n", i, self->_wishes[i]);
+
+    int total_wishes = 0;
+    for(int i = 0; i < sizeof(self->_wishes) / sizeof(int); i++)
+        total_wishes += self->_wishes[i];
+
+    int max_position = 0;
+    if (self->_seat_position == conveyor->_size - 1)
+        max_position = self->_seat_position;
+    else
+        max_position = self->_seat_position + 1;
+
+    while(total_wishes > 0) {
+        for(int i = self->_seat_position - 1; i <= max_position; i++) {
+            pthread_mutex_lock(&conveyor->_each_food_slots[i]);
+            if (conveyor->_food_slots[i] == -1) {
+                pthread_mutex_unlock(&conveyor->_each_food_slots[i]);
+                break;
+            }
+            if (self->_wishes[conveyor->_food_slots[i]] > 0) {
+                self->_wishes[conveyor->_food_slots[i]]--;
+                customer_pick_food(i);
+                total_wishes--;
+                break;
+            }
+            pthread_mutex_unlock(&conveyor->_each_food_slots[i]);
+        }
+    }
+    customer_leave(self);
+
+    //msleep(1000000);  // REMOVA ESTE SLEEP APÓS IMPLEMENTAR SUA SOLUÇÃO!
     pthread_exit(NULL);
 }
 
@@ -42,6 +76,7 @@ void customer_pick_food(int food_slot) {
     */
 
     /* INSIRA SUA LÓGICA AQUI */
+    printf("!!!!!!!!!!!!cliente quer comer o que está em %d!!!!!!!!!!!", food_slot);
 }
 
 void customer_eat(customer_t* self, enum menu_item food) {
@@ -56,6 +91,8 @@ void customer_eat(customer_t* self, enum menu_item food) {
     */
 
     /* INSIRA SUA LÓGICA AQUI */
+    /* TIRAR A COMIDA DA LISTA DE DESEJO DO CLIENTE */
+    /* TIRAR A COMIDA DA ESTEIRA */
 
     /* NÃO EDITE O CONTEÚDO ABAIXO */
     virtual_clock_t* global_clock = globals_get_virtual_clock();
@@ -110,6 +147,9 @@ void customer_leave(customer_t* self) {
     conveyor_belt_t* conveyor_belt = globals_get_conveyor_belt();
 
     /* INSIRA SUA LÓGICA AQUI */
+    pthread_mutex_lock(&conveyor_belt->_seats_mutex);
+    conveyor_belt->_seats[self->_seat_position] = -1;
+    pthread_mutex_unlock(&conveyor_belt->_seats_mutex);
 }
 
 customer_t* customer_init() {

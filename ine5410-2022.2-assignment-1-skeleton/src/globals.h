@@ -98,6 +98,18 @@ dishes_info_t* dishes_info_init(int menu_size);
 */
 void dishes_info_finalize(dishes_info_t* self);
 
+/**
+ * @brief Retorna variável que indica se o restaurante está aberto
+ * 
+ * @return dishes_info_t* 
+ */
+unsigned int globals_get_opened_restaurant();
+
+/**
+ * @brief seta_variável que indica restaurante aberto
+ */
+void globals_set_opened_restaurant(int opened);
+
 
 /**
  * @brief Finaliza todas as variáveis globais.

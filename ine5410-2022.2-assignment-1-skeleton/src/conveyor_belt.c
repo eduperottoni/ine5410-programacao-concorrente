@@ -24,10 +24,11 @@ void* conveyor_belt_run(void* arg) {
             self->_food_slots[i] = self->_food_slots[i+1];
         }
         self->_food_slots[self->_size-1] = last;
-        pthread_mutex_unlock(&self->_food_slots_mutex);
-
+        
         print_virtual_time(globals_get_virtual_clock());
         fprintf(stdout, GREEN "[INFO]" NO_COLOR " Conveyor belt finished moving...\n");
+        pthread_mutex_unlock(&self->_food_slots_mutex);
+
         print_conveyor_belt(self);
     }
     pthread_exit(NULL);
@@ -43,6 +44,7 @@ conveyor_belt_t* conveyor_belt_init(config_t* config) {
     self->_size = config->conveyor_belt_capacity;
     self->_seats = (int*) malloc(sizeof(int)* self->_size);
     self->_food_slots = (int*) malloc(sizeof(int)* self->_size);
+    self->_each_food_slots = (pthread_mutex_t*) malloc(sizeof(pthread_mutex_t)*self->_size);
     for (int i=0; i<self->_size; i++) {
         self->_food_slots[i] = -1;
         self->_seats[i] = -1;
@@ -52,6 +54,8 @@ conveyor_belt_t* conveyor_belt_init(config_t* config) {
     // Adicionados
     sem_init(&self->_empty_slots_sem, 0, self->_size);
     sem_init(&self->_full_slots_sem, 0, 0);
+    for (int i = 0; i < self->_size; i++)
+        pthread_mutex_init(&(self->_each_food_slots[i]), NULL);
     pthread_create(&self->thread, NULL, conveyor_belt_run, (void *) self);
     print_conveyor_belt(self);
     return self;
@@ -64,6 +68,9 @@ void conveyor_belt_finalize(conveyor_belt_t* self) {
     pthread_mutex_destroy(&self->_food_slots_mutex);
     sem_destroy(&self->_empty_slots_sem);
     sem_destroy(&self->_full_slots_sem);
+    //adicionado
+    for (int i = 0; i < self->_size; i++)
+        pthread_mutex_destroy(&(self->_each_food_slots[i]));
     free(self);
 }
 

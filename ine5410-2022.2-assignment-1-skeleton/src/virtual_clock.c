@@ -4,6 +4,7 @@
 #include <errno.h>
 
 #include "virtual_clock.h"
+#include "globals.h"
 
 
 void* virtual_clock_run(void* arg) {
@@ -11,6 +12,8 @@ void* virtual_clock_run(void* arg) {
     virtual_clock_t* self = (virtual_clock_t*) arg;
     while (TRUE) {
         if (self->current_time >= self->closing_time) {
+            //Seta global de restaurante aberto como false
+            globals_set_opened_restaurant(0);
             print_virtual_time(self);
             fprintf(stdout, GREEN "[INFO]" RED " RESTAURANT IS CLOSED!!!\n");
         }
