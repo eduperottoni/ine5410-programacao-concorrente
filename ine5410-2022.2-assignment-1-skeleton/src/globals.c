@@ -2,7 +2,6 @@
 
 #include "globals.h"
 
-
 /*
     VOCÊ DEVE CRIAR VARIÁVEIS GLOBAIS PARA ARMAZENAR DADOS SOBRE A SIMULAÇÃO.
     NOTAS:
@@ -16,12 +15,21 @@
 /* VARIÁVEIS GLOBAIS CRIADAS */
 
 dishes_info_t* global_dishes_info = NULL;
-int* global_served_costumers = NULL;
+int global_served_customers = 0;
 unsigned int global_opened_restaurant = 1;
+int global_customers_seat = 0;
 
 virtual_clock_t* global_virtual_clock = NULL;
 conveyor_belt_t* global_conveyor_belt = NULL;
 queue_t* global_queue = NULL;
+
+int globals_get_customers_seat() {
+    return global_customers_seat;
+}
+
+void globals_set_customers_seat(int n) {
+    global_customers_seat = n;
+}
 
 unsigned int globals_get_opened_restaurant() {
     return global_opened_restaurant;
@@ -37,6 +45,14 @@ void globals_set_dishes_info(dishes_info_t* dishes_info) {
 
 dishes_info_t* globals_get_dishes_info() {
     return global_dishes_info;
+}
+
+void globals_set_served_customers(int n) {
+    global_served_customers = n;
+}
+
+int globals_get_served_customers() {
+    return global_served_customers;
 }
 
 dishes_info_t* dishes_info_init(int menu_size) {
@@ -56,14 +72,6 @@ dishes_info_t* dishes_info_init(int menu_size) {
 
 void dishes_info_finalize(dishes_info_t* self) {
     free(self);
-}
-
-void globals_set_served_costumers() {
-    *global_served_costumers = 0;
-}
-
-int* globals_get_served_costumers() {
-    return global_served_costumers;
 }
 
 void globals_set_virtual_clock(virtual_clock_t* virtual_clock) {

@@ -16,8 +16,6 @@ int hostess_check_for_a_free_conveyor_seat() {
         5.  CUIDADO COM PROBLEMAS DE SINCRONIZAÇÃO!
     */
 
-    // mutex, unlock se tiver vaga na esteira (livia)
-
     conveyor_belt_t* conveyor = globals_get_conveyor_belt();
     virtual_clock_t* virtual_clock = globals_get_virtual_clock();
     
@@ -26,21 +24,15 @@ int hostess_check_for_a_free_conveyor_seat() {
     print_conveyor_belt(conveyor);
 
     while (TRUE) {
-        // MUTEX LOCK(HOSTESS) (livia)
-        //pthread_mutex_lock(&host_wait);
-
-        for (int i=0; i<conveyor->_size; i++) {
-            if (conveyor->_seats[i] == -1 && i !=0) {  // Atenção à regra! (-1 = livre, 0 = sushi_chef, 1 = customer)
-                // SE ESTIVER VAZIO E NAO FOR O CHEFE = MUTEX UNLOCK(HOSTESS) (livia)
-                //pthread_mutex_unlock(&host_wait);
-
-                print_virtual_time(globals_get_virtual_clock());
-                fprintf(stdout, GREEN "[INFO]" NO_COLOR " O Hostess encontrou o assento %d livre para o próximo cliente!\n", i);
-                return i;
-            } 
-            // IF SE FOR CHEFE (I = 0), RETORNA I? (livia)
-        }
-        msleep(120000/virtual_clock->clock_speed_multiplier);  // Não remova esse sleep!
+    //sem_wait(&conveyor->_free_seats_sem);
+    for (int i=0; i<conveyor->_size; i++) {
+        if (conveyor->_seats[i] == -1 && i !=0) {  // Atenção à regra! (-1 = livre, 0 = sushi_chef, 1 = customer)
+            print_virtual_time(globals_get_virtual_clock());
+            fprintf(stdout, GREEN "[INFO]" NO_COLOR " O Hostess encontrou o assento %d livre para o próximo cliente!\n", i);
+            return i;
+        }   
+    }
+    msleep(120000/virtual_clock->clock_speed_multiplier);  // Não remova esse sleep!
     }
 }
 
@@ -65,8 +57,10 @@ void hostess_guide_first_in_line_customer_to_conveyor_seat(int seat) {
     //seats_mutex inserido abaixo
     pthread_mutex_lock(&conveyor->_seats_mutex);
     conveyor->_seats[seat] = 1;
-    pthread_mutex_unlock(&conveyor->_seats_mutex);
 
+    globals_set_customers_seat(globals_get_customers_seat() + 1);
+    // sem_post(&conveyor->_customers_sem);
+    pthread_mutex_unlock(&conveyor->_seats_mutex);
     customer->_seat_position = seat;
 
     print_virtual_time(globals_get_virtual_clock());
@@ -95,8 +89,10 @@ void* hostess_run() {
         }
         msleep(3000/virtual_clock->clock_speed_multiplier);  // Não remova esse sleep!
     }
-    // ADICIONAR FECHAMENTO COM ELSE (livia)
 
+    //FECHAMENTO
+    printf("RESTAURANTE DEVE FECHAR!");
+    queue_finalize(queue);
     pthread_exit(NULL);
 }
 

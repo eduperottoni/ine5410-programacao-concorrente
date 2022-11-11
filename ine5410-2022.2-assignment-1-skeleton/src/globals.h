@@ -53,16 +53,16 @@ extern queue_t *globals_get_queue();
 /**
  * @brief Inicia contador de clientes servidos (de modo global)
  * 
- * @param counter
+ * @param 
  */
-extern void globals_set_served_costumers();
+void globals_set_served_customers();
 
 /**
  * @brief Retorna ponteiro para o contador de cientes servidos
  * 
- * @return int* 
+ * @return int
  */
-extern int* globals_get_served_costumers();
+extern int globals_get_served_customers();
 
 /**
  * @brief Informações sobre pratos preparados e consumidos
@@ -110,6 +110,18 @@ unsigned int globals_get_opened_restaurant();
  */
 void globals_set_opened_restaurant(int opened);
 
+
+/**
+ * @brief Retorna variável que indica clientes sentados
+ * 
+ * @return int
+ */
+extern int globals_get_customers_seat();
+
+/**
+ * @brief seta_variável que indica clientes sentados
+ */
+void globals_set_customers_seat(int n);
 
 /**
  * @brief Finaliza todas as variáveis globais.

@@ -11,7 +11,7 @@ void* queue_run(void *arg) {
     /* NÃO PRECISA ALTERAR ESSA FUNÇÃO */
     queue_t* self = (queue_t*) arg;
     virtual_clock_t* clock = globals_get_virtual_clock();
-    while (TRUE) {
+    while (globals_get_opened_restaurant()) {
         customer_t* customer = customer_init();
         queue_insert(self, customer);
         print_virtual_time(clock);
@@ -19,6 +19,7 @@ void* queue_run(void *arg) {
         print_queue(self);
         msleep((rand() % 120000)/clock->clock_speed_multiplier);
     }
+    pthread_exit(NULL);
 }
 
 queue_t* queue_insert(queue_t *self, customer_t* customer) {
