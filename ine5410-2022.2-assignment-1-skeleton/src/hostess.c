@@ -23,17 +23,18 @@ int hostess_check_for_a_free_conveyor_seat() {
     fprintf(stdout, GREEN "[INFO]" NO_COLOR " O Hostess está procurando por um assento livre...\n");
     print_conveyor_belt(conveyor);
 
-    while (TRUE) {
-    //sem_wait(&conveyor->_free_seats_sem);
+    //while (TRUE) {
+
     for (int i=0; i<conveyor->_size; i++) {
         if (conveyor->_seats[i] == -1 && i !=0) {  // Atenção à regra! (-1 = livre, 0 = sushi_chef, 1 = customer)
+            printf("LUGAR %d LIVRE", i);
             print_virtual_time(globals_get_virtual_clock());
             fprintf(stdout, GREEN "[INFO]" NO_COLOR " O Hostess encontrou o assento %d livre para o próximo cliente!\n", i);
             return i;
         }   
     }
     msleep(120000/virtual_clock->clock_speed_multiplier);  // Não remova esse sleep!
-    }
+    //}
 }
 
 void hostess_guide_first_in_line_customer_to_conveyor_seat(int seat) {
@@ -49,6 +50,7 @@ void hostess_guide_first_in_line_customer_to_conveyor_seat(int seat) {
         3.  NÃO REMOVA OS PRINTS!
     */
 
+    //fprintf("ÍNDICE ERRADO: %d", seat);
     conveyor_belt_t* conveyor = globals_get_conveyor_belt();
     queue_t* queue = globals_get_queue();
 
@@ -59,6 +61,7 @@ void hostess_guide_first_in_line_customer_to_conveyor_seat(int seat) {
     conveyor->_seats[seat] = 1;
 
     globals_set_customers_seat(globals_get_customers_seat() + 1);
+
     // sem_post(&conveyor->_customers_sem);
     pthread_mutex_unlock(&conveyor->_seats_mutex);
     customer->_seat_position = seat;
@@ -81,9 +84,17 @@ void* hostess_run() {
     */
     virtual_clock_t* virtual_clock = globals_get_virtual_clock();
     queue_t* queue = globals_get_queue();
-
+    conveyor_belt_t* conveyor = globals_get_conveyor_belt();
+    
     while (globals_get_opened_restaurant()) {  // Adicione a lógica para que o Hostess realize o fechamento do Sushi Shop!
+        
         if (queue->_length > 0) {
+
+            //Decrementa semáforo
+
+            sem_wait(&conveyor->_free_seats_sem);
+            if (!globals_get_opened_restaurant()) break;
+
             int seat = hostess_check_for_a_free_conveyor_seat();
             hostess_guide_first_in_line_customer_to_conveyor_seat(seat);
         }
@@ -91,7 +102,7 @@ void* hostess_run() {
     }
 
     //FECHAMENTO
-    printf("RESTAURANTE DEVE FECHAR!");
+    fprintf(stdout, RED "SUSHI SHOP MUST BE CLOSED!\n" NO_COLOR);
     queue_finalize(queue);
     pthread_exit(NULL);
 }
@@ -109,6 +120,15 @@ hostess_t* hostess_init() {
 
 void hostess_finalize(hostess_t* self) {
     /* NÃO PRECISA ALTERAR ESSA FUNÇÃO */
+
+    conveyor_belt_t* conveyor = globals_get_conveyor_belt();
+
+    // int sem_value = 0; 
+    // sem_getvalue(&conveyor->_free_seats_sem, &sem_value);
+    // if (!sem_value) sem_post(&conveyor->_free_seats_sem);
+    // sem_post(&conveyor->_free_seats_sem);
+
     pthread_join(self->thread, NULL);
+    fprintf(stdout, GREEN "HOSTESS FINALIZED!\n" NO_COLOR);
     free(self);
 }

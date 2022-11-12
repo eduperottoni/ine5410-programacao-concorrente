@@ -110,6 +110,10 @@ unsigned int globals_get_opened_restaurant();
  */
 void globals_set_opened_restaurant(int opened);
 
+/**
+ * @brief imprime resultados da simulação
+ */
+void print_simulation_counters(dishes_info_t* info);
 
 /**
  * @brief Retorna variável que indica clientes sentados

@@ -154,5 +154,6 @@ void print_conveyor_belt(conveyor_belt_t* self) {
     fprintf(stdout, NO_COLOR "\n    ]\n");
     fprintf(stdout, NO_COLOR "}\n" NO_COLOR);
     //Adicionado
-    printf("CLIENTES_SERVIDOS: %d", globals_get_served_customers());
+    //printf("CLIENTES_SERVIDOS: %d", globals_get_served_customers());
+    fprintf(stdout, GREEN "CLIENTES_SERVIDOS: %d", globals_get_served_customers());
 }

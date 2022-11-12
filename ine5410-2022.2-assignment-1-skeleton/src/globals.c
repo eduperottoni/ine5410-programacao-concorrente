@@ -1,6 +1,7 @@
 #include <stdlib.h>
 
 #include "globals.h"
+#include "args.h"
 
 /*
     VOCÊ DEVE CRIAR VARIÁVEIS GLOBAIS PARA ARMAZENAR DADOS SOBRE A SIMULAÇÃO.
@@ -70,9 +71,30 @@ dishes_info_t* dishes_info_init(int menu_size) {
     return self;
 }
 
+void print_simulation_counters(dishes_info_t* info) {
+    title();
+    fprintf(stdout, MAGENTA "Simulation counters results:\n" NO_COLOR);
+    fprintf(stdout, CYAN  " Prepared dishes " NO_COLOR "\n");
+    fprintf(stdout, GREEN "  Sushi                   " NO_COLOR "%d\n", info->prepared_dishes[0]);
+    fprintf(stdout, GREEN "  Dango                   " NO_COLOR "%d\n", info->prepared_dishes[1]);
+    fprintf(stdout, GREEN "  Ramen                   " NO_COLOR "%d\n", info->prepared_dishes[2]);
+    fprintf(stdout, GREEN "  Onigiri                 " NO_COLOR "%d\n", info->prepared_dishes[3]);
+    fprintf(stdout, GREEN "  Tofu                    " NO_COLOR "%d\n", info->prepared_dishes[4]);
+    fprintf(stdout, CYAN  " Consumed dishes " NO_COLOR "\n");
+    fprintf(stdout, GREEN "  Sushi                   " NO_COLOR "%d\n", info->consumed_dishes[0]);
+    fprintf(stdout, GREEN "  Dango                   " NO_COLOR "%d\n", info->consumed_dishes[1]);
+    fprintf(stdout, GREEN "  Ramen                   " NO_COLOR "%d\n", info->consumed_dishes[2]);
+    fprintf(stdout, GREEN "  Onigiri                 " NO_COLOR "%d\n", info->consumed_dishes[3]);
+    fprintf(stdout, GREEN "  Tofu                    " NO_COLOR "%d\n", info->consumed_dishes[4]);
+    separator();
+}
+
 void dishes_info_finalize(dishes_info_t* self) {
+    print_simulation_counters(self);
     free(self);
 }
+
+
 
 void globals_set_virtual_clock(virtual_clock_t* virtual_clock) {
     global_virtual_clock = virtual_clock;

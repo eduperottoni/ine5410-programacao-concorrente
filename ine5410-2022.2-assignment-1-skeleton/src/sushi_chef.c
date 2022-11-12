@@ -44,21 +44,23 @@ void sushi_chef_seat(sushi_chef_t* self) {
     print_virtual_time(globals_get_virtual_clock());
     fprintf(stdout, GREEN "[INFO]" NO_COLOR " Sushi Chef %d arrived at the Sushi Shop and wants to seat!\n", self->_id);
     
-    while (TRUE) {
-        for (int i=0; i<conveyor->_size; i++) {
-            pthread_mutex_lock(&conveyor->_seats_mutex);
-            if (conveyor->_seats[i] == -1) {
-                conveyor->_seats[i] = 0;
-                self->_seat_position = i;
-                print_virtual_time(globals_get_virtual_clock());
-                fprintf(stdout, GREEN "[INFO]" NO_COLOR " Sushi Chef %d seated at conveyor->_seats[%d]!\n", self->_id, i);
-                pthread_mutex_unlock(&conveyor->_seats_mutex);
-                break;
-            }
+    //while (TRUE) {
+    for (int i=0; i<conveyor->_size; i++) {
+        pthread_mutex_lock(&conveyor->_seats_mutex);
+        if (conveyor->_seats[i] == -1) {
+            conveyor->_seats[i] = 0;
+            //decrementa no semáforo de assentos vazios
+            sem_wait(&conveyor->_free_seats_sem);
+            self->_seat_position = i;
+            print_virtual_time(globals_get_virtual_clock());
+            fprintf(stdout, GREEN "[INFO]" NO_COLOR " Sushi Chef %d seated at conveyor->_seats[%d]!\n", self->_id, i);
             pthread_mutex_unlock(&conveyor->_seats_mutex);
+            break;
         }
-        break;
+        pthread_mutex_unlock(&conveyor->_seats_mutex);
     }
+        //break;
+    //}
 }
 
 void sushi_chef_leave(sushi_chef_t* self) {
@@ -74,6 +76,7 @@ void sushi_chef_leave(sushi_chef_t* self) {
     /* INSIRA SUA LÓGICA AQUI */
     pthread_mutex_lock(&conveyor->_seats_mutex);
     conveyor->_seats[self->_seat_position] = -1;
+    sem_post(&conveyor->_free_seats_sem);
     pthread_mutex_unlock(&conveyor->_seats_mutex);
 
     
@@ -208,6 +211,7 @@ sushi_chef_t* sushi_chef_init() {
 void sushi_chef_finalize(sushi_chef_t* self) {
     /* NÃO PRECISA ALTERAR ESSA FUNÇÃO */
     pthread_join(self->thread, NULL);
+    fprintf(stdout, GREEN "SUSHI CHEF FINALIZOU\n" NO_COLOR);
     free(self);
 }
 

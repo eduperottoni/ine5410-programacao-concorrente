@@ -33,11 +33,14 @@ int main (int argc, char** argv) {
 
     /* Init the Hostess */
     hostess_t* hostess = hostess_init();
-
+    
     /* Join threads and free used memory */
-    hostess_finalize(hostess);
+    fprintf(stdout, RED "FECHAMENTO\n");
     sushi_chef_finalize(sushi_chef);
+    hostess_finalize(hostess);
     globals_finalize();
+    
+    
 
     return EXIT_SUCCESS;
 }

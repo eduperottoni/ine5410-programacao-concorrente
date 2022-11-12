@@ -27,32 +27,21 @@ void* customer_run(void* arg) {
     conveyor_belt_t* conveyor = globals_get_conveyor_belt();
 
     /* INSIRA SUA LÓGICA AQUI */
-    while(self -> _seat_position == -1); //espera até ser colocado em um assento (seat_position != -1)
-    // //Print abaixo apenas pra teste (ver os desejos do cliente)
-    // for (int i = 0; i < 5; i++)
-    //     printf("DESEJO %d = %d\n", i, self->_wishes[i]);
+    //espera até ser colocado em um assento (seat_position != -1)
+    while(self -> _seat_position == -1 && globals_get_opened_restaurant()); 
 
     int total_wishes = 0;
     for(int i = 0; i < sizeof(self->_wishes) / sizeof(int); i++)
         total_wishes += self->_wishes[i];
 
-    // 
-
-    //Isso é porque tipo, a última posição da fila (19) não pode acessar seat_position+1 pq não tem índice 20 no array
-
     int max_position = 0;
     int min_position = 1;
-    if (self->_seat_position == conveyor->_size - 1)
-        max_position = self->_seat_position;
-    else
-        max_position = self->_seat_position + 1;
-    
-    if (self->_seat_position - 1 == 0)
-        min_position = 1;
-    else
-        min_position = self->_seat_position - 1;
+    if (self->_seat_position == conveyor->_size - 1) max_position = self->_seat_position;
+    else max_position = self->_seat_position + 1;
+    if (self->_seat_position - 1 == 0) min_position = 1;
+    else min_position = self->_seat_position - 1;
 
-    while(total_wishes > 0) {
+    while(total_wishes > 0 && globals_get_opened_restaurant()) {
         int food = -1;
         for(int i = min_position; i <= max_position; i++) {
             
@@ -78,7 +67,6 @@ void* customer_run(void* arg) {
         
     }
     customer_leave(self);
-    // sem_post(&conveyor->_free_seats_sem);
     //msleep(1000000);  // REMOVA ESTE SLEEP APÓS IMPLEMENTAR SUA SOLUÇÃO!
     pthread_exit(NULL);
 }
@@ -184,14 +172,15 @@ void customer_leave(customer_t* self) {
     conveyor_belt_t* conveyor_belt = globals_get_conveyor_belt();
 
     /* INSIRA SUA LÓGICA AQUI */
-    
-    pthread_mutex_lock(&conveyor_belt->_seats_mutex);
-    conveyor_belt->_seats[self->_seat_position] = -1;
-    globals_set_customers_seat(globals_get_customers_seat() - 1);
-    printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!CLIENTE TERMINOU E SAIU!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-    globals_set_served_customers(globals_get_served_customers() + 1);
-    pthread_mutex_unlock(&conveyor_belt->_seats_mutex);
-
+    if (self->_seat_position != -1) {
+        pthread_mutex_lock(&conveyor_belt->_seats_mutex);
+        conveyor_belt->_seats[self->_seat_position] = -1;
+        globals_set_customers_seat(globals_get_customers_seat() - 1);
+        //incrementa no semáforo de assentos vazios
+        sem_post(&conveyor_belt->_free_seats_sem);
+        globals_set_served_customers(globals_get_served_customers() + 1);
+        pthread_mutex_unlock(&conveyor_belt->_seats_mutex);
+    }
 }
 
 customer_t* customer_init() {
