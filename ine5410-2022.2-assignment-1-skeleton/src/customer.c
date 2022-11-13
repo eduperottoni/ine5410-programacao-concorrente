@@ -28,7 +28,15 @@ void* customer_run(void* arg) {
 
     /* INSIRA SUA LÓGICA AQUI */
     //espera até ser colocado em um assento (seat_position != -1)
-    while(self -> _seat_position == -1 && globals_get_opened_restaurant()); 
+
+    //sem_wait(&self->_customer_sem);
+    //while(self -> _seat_position == -1 && globals_get_opened()); 
+
+    pthread_mutex_lock(&self->_customer_mutex);
+    if (!globals_get_opened()){
+        customer_leave(self);
+        pthread_exit(NULL);
+    }
 
     int total_wishes = 0;
     for(int i = 0; i < sizeof(self->_wishes) / sizeof(int); i++)
@@ -41,11 +49,12 @@ void* customer_run(void* arg) {
     if (self->_seat_position - 1 == 0) min_position = 1;
     else min_position = self->_seat_position - 1;
 
-    while(total_wishes > 0 && globals_get_opened_restaurant()) {
+    while(total_wishes > 0 && globals_get_opened()) {
+
         int food = -1;
         for(int i = min_position; i <= max_position; i++) {
             
-            sem_wait(&conveyor->_customers_sem);
+            //sem_wait(&conveyor->_customers_sem);
 
             pthread_mutex_lock(&conveyor->_each_food_slots[i]);
             if (conveyor->_food_slots[i] == -1) {
@@ -61,7 +70,7 @@ void* customer_run(void* arg) {
             }
             pthread_mutex_unlock(&conveyor->_each_food_slots[i]);
 
-            sem_post(&conveyor->_customers_sem);
+            //sem_post(&conveyor->_customers_sem);
         }
         if (food > -1) customer_eat(self, food);
         
@@ -82,16 +91,15 @@ void customer_pick_food(int food_slot) {
             POSICIONAL DO CLIENTE NA ESTEIRA (O ASSENTO ONDE ELE ESTÁ SENTADO).
         5.  NOTE QUE CLIENTES ADJACENTES DISPUTARÃO OS MESMOS PRATOS. CUIDADO COM PROBLEMAS DE SINCRONIZAÇÃO!
     */
-
-   /*CARALHO, COMO ACESSAR O CLIENTE AQUI?????? QUE MERDAAA*/
    
     /* INSIRA SUA LÓGICA AQUI */
-    // Tirar a comida da esteira
     conveyor_belt_t* conveyor = globals_get_conveyor_belt();
-    //lugar que o cliente pegou a comida fica vazio
+    
+    //Lugar da esteira que o cliente pegou a comida fica vazio
+    pthread_mutex_lock(&conveyor->_food_slots_mutex);
     conveyor-> _food_slots[food_slot] = -1;
+    pthread_mutex_unlock(&conveyor->_food_slots_mutex);
     printf("CLIENTE PEGOU A COMIDA DO FOOD SLOT %d\n", food_slot);
-
 }
 
 void customer_eat(customer_t* self, enum menu_item food) {
@@ -109,15 +117,10 @@ void customer_eat(customer_t* self, enum menu_item food) {
 
     /* INSIRA SUA LÓGICA AQUI */
     // Tira a comida da lista de desejos do cliente
-    printf("[W[%d]] = %d", food, self->_wishes[food]);
 
     self->_wishes[food]--;
     //Incrementa variável global
     dishes_info -> consumed_dishes[food]++;
-
-    printf("[T] %d do cliente %d\n", food, self->_id);
-    for (int i = 0; i < 5; i++)
-        printf("[W[%d]] = %d", i, self->_wishes[i]);
 
     /* NÃO EDITE O CONTEÚDO ABAIXO */
     virtual_clock_t* global_clock = globals_get_virtual_clock();
@@ -175,10 +178,11 @@ void customer_leave(customer_t* self) {
     if (self->_seat_position != -1) {
         pthread_mutex_lock(&conveyor_belt->_seats_mutex);
         conveyor_belt->_seats[self->_seat_position] = -1;
-        globals_set_customers_seat(globals_get_customers_seat() - 1);
+
         //incrementa no semáforo de assentos vazios
         sem_post(&conveyor_belt->_free_seats_sem);
-        globals_set_served_customers(globals_get_served_customers() + 1);
+        if (globals_get_opened())
+            globals_set_served_customers(globals_get_served_customers() + 1);
         pthread_mutex_unlock(&conveyor_belt->_seats_mutex);
     }
 }
@@ -195,13 +199,19 @@ customer_t* customer_init() {
         self->_wishes[i] = (rand() % 4);
     }
     self->_seat_position = -1;
+    //Semáforo binário para cada cliente
+    pthread_mutex_init(&self->_customer_mutex, NULL);
+    pthread_mutex_lock(&self->_customer_mutex);
     pthread_create(&self->thread, NULL, customer_run, (void *) self);
     return self;
 }
 
 void customer_finalize(customer_t* self) {
     /* NÃO PRECISA ALTERAR ESSA FUNÇÃO */
+    pthread_mutex_unlock(&self->_customer_mutex);
     pthread_join(self->thread, NULL);
+    pthread_mutex_destroy(&self->_customer_mutex);
+    printf("CLIENTE %d FINALIZADO\n", self->_id);
     free(self);
 }
 

@@ -17,27 +17,18 @@
 
 dishes_info_t* global_dishes_info = NULL;
 int global_served_customers = 0;
-unsigned int global_opened_restaurant = 1;
-int global_customers_seat = 0;
+unsigned int global_opened = TRUE;
 
 virtual_clock_t* global_virtual_clock = NULL;
 conveyor_belt_t* global_conveyor_belt = NULL;
 queue_t* global_queue = NULL;
 
-int globals_get_customers_seat() {
-    return global_customers_seat;
+unsigned int globals_get_opened() {
+    return global_opened;
 }
 
-void globals_set_customers_seat(int n) {
-    global_customers_seat = n;
-}
-
-unsigned int globals_get_opened_restaurant() {
-    return global_opened_restaurant;
-}
-
-void globals_set_opened_restaurant(int opened) {
-    global_opened_restaurant = opened;
+void globals_set_opened(int opened) {
+    global_opened = opened;
 }
 
 void globals_set_dishes_info(dishes_info_t* dishes_info) {
@@ -71,9 +62,10 @@ dishes_info_t* dishes_info_init(int menu_size) {
     return self;
 }
 
-void print_simulation_counters(dishes_info_t* info) {
+void print_simulation_counters(dishes_info_t* info, int served_customers) {
     title();
     fprintf(stdout, MAGENTA "Simulation counters results:\n" NO_COLOR);
+    fprintf(stdout, CYAN  " Total customers served with fulfilled wishes => %d" NO_COLOR "\n", served_customers);
     fprintf(stdout, CYAN  " Prepared dishes " NO_COLOR "\n");
     fprintf(stdout, GREEN "  Sushi                   " NO_COLOR "%d\n", info->prepared_dishes[0]);
     fprintf(stdout, GREEN "  Dango                   " NO_COLOR "%d\n", info->prepared_dishes[1]);
@@ -90,7 +82,7 @@ void print_simulation_counters(dishes_info_t* info) {
 }
 
 void dishes_info_finalize(dishes_info_t* self) {
-    print_simulation_counters(self);
+    print_simulation_counters(self, global_served_customers);
     free(self);
 }
 
@@ -126,7 +118,8 @@ queue_t* globals_get_queue() {
  * de usar o free dentro dessa função.
  */
 void globals_finalize() {
-    virtual_clock_finalize(global_virtual_clock);
     conveyor_belt_finalize(global_conveyor_belt);
+    virtual_clock_finalize(global_virtual_clock);
+    fprintf(stdout, GREEN "GLOBALS FINALIZED!\n" NO_COLOR);
     dishes_info_finalize(global_dishes_info);
 }

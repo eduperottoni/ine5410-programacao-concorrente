@@ -11,7 +11,7 @@ void* conveyor_belt_run(void* arg) {
     /* NÃO PRECISA ALTERAR ESSA FUNÇÃO */
     conveyor_belt_t* self = (conveyor_belt_t*) arg;
     virtual_clock_t* virtual_clock = globals_get_virtual_clock();
-    while (globals_get_opened_restaurant()) {
+    while (globals_get_opened()) {
         msleep(CONVEYOR_IDLE_PERIOD/virtual_clock->clock_speed_multiplier);
         print_virtual_time(globals_get_virtual_clock());
         fprintf(stdout, GREEN "[INFO]" NO_COLOR " Conveyor belt started moving...\n");
@@ -21,29 +21,33 @@ void* conveyor_belt_run(void* arg) {
 
         /*CRIAR SEMAFORO QUE CONTA NUMERO DE CLIENTES*/
 
+        //tranca os clientes
+        // for(int i = 0; i < self->_size; i++) {
+        //     sem_wait(&self->_customers_sem);
+        // }
+        
         pthread_mutex_lock(&self->_food_slots_mutex);
         /* for do tamanho de clientes sentados -> wait num semáforo iniciado com o número de clientes sentados*/
         int last = self->_food_slots[0];
         for (int i=0; i<self->_size-1; i++) {
-            pthread_mutex_lock(&self->_each_food_slots[i]);
-            pthread_mutex_lock(&self->_each_food_slots[i+1]);
+            //pthread_mutex_lock(&self->_each_food_slots[i]);
+            //pthread_mutex_lock(&self->_each_food_slots[i+1]);
             self->_food_slots[i] = self->_food_slots[i+1];
-            pthread_mutex_unlock(&self->_each_food_slots[i]);
-            pthread_mutex_unlock(&self->_each_food_slots[i+1]);
+            //pthread_mutex_unlock(&self->_each_food_slots[i]);
+            //pthread_mutex_unlock(&self->_each_food_slots[i+1]);
         }
         self->_food_slots[self->_size-1] = last;
-        
+
         print_virtual_time(globals_get_virtual_clock());
         fprintf(stdout, GREEN "[INFO]" NO_COLOR " Conveyor belt finished moving...\n");
         /*for com tamanho de clientes sentados -> post num semáforo iniciado com o número de clientes sentados*/
         
-        for(int i = 0; i < globals_get_customers_seat(); i++) {
-            sem_post(&self->_customers_sem);
-        }
+        //destranca os clientes
+        // for(int i = 0; i < self->_size; i++) {
+        //     sem_post(&self->_customers_sem);
+        // }
+
         pthread_mutex_unlock(&self->_food_slots_mutex);
-
-        
-
         print_conveyor_belt(self);
     }
     pthread_exit(NULL);
@@ -70,7 +74,7 @@ conveyor_belt_t* conveyor_belt_init(config_t* config) {
     sem_init(&self->_free_seats_sem, 0, self->_size);
     sem_init(&self->_empty_slots_sem, 0, self->_size);
     sem_init(&self->_full_slots_sem, 0, 0);
-    sem_init(&self->_customers_sem, 0, 0);
+    // sem_init(&self->_customers_sem, 0, self->_size);
     for (int i = 0; i < self->_size; i++)
         pthread_mutex_init(&(self->_each_food_slots[i]), NULL);
     pthread_create(&self->thread, NULL, conveyor_belt_run, (void *) self);
@@ -87,7 +91,7 @@ void conveyor_belt_finalize(conveyor_belt_t* self) {
     sem_destroy(&self->_empty_slots_sem);
     sem_destroy(&self->_full_slots_sem);
     sem_destroy(&self->_free_seats_sem);
-    sem_destroy(&self->_customers_sem);
+    // sem_destroy(&self->_customers_sem);
     for (int i = 0; i < self->_size; i++)
         pthread_mutex_destroy(&(self->_each_food_slots[i]));
     free(self);

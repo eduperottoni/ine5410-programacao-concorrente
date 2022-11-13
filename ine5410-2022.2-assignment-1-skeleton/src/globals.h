@@ -103,29 +103,18 @@ void dishes_info_finalize(dishes_info_t* self);
  * 
  * @return dishes_info_t* 
  */
-unsigned int globals_get_opened_restaurant();
+unsigned int globals_get_opened();
 
 /**
  * @brief seta_variável que indica restaurante aberto
  */
-void globals_set_opened_restaurant(int opened);
+void globals_set_opened(int opened);
 
 /**
  * @brief imprime resultados da simulação
  */
-void print_simulation_counters(dishes_info_t* info);
+void print_simulation_counters(dishes_info_t* info, int served_customers);
 
-/**
- * @brief Retorna variável que indica clientes sentados
- * 
- * @return int
- */
-extern int globals_get_customers_seat();
-
-/**
- * @brief seta_variável que indica clientes sentados
- */
-void globals_set_customers_seat(int n);
 
 /**
  * @brief Finaliza todas as variáveis globais.

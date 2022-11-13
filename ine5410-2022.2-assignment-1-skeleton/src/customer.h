@@ -15,6 +15,7 @@ typedef struct customer {
     int _wishes[5];
     int _seat_position;
     pthread_t thread;
+    pthread_mutex_t _customer_mutex;
 } customer_t;
 
 customer_t* customer_init();
