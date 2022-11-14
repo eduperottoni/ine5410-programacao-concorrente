@@ -16,6 +16,7 @@
 /* VARIÁVEIS GLOBAIS CRIADAS */
 
 dishes_info_t* global_dishes_info = NULL;
+pthread_mutex_t* global_consumed_dishes_mutexes = NULL;
 int global_served_customers = 0;
 unsigned int global_opened = TRUE;
 
@@ -23,8 +24,39 @@ virtual_clock_t* global_virtual_clock = NULL;
 conveyor_belt_t* global_conveyor_belt = NULL;
 queue_t* global_queue = NULL;
 
-pthread_mutex_t* global_consumed_dishes_mutexes = NULL;
+// Funções da global que guarda pratos consumidos/preparados
 
+void globals_set_dishes_info(dishes_info_t* dishes_info) {
+    global_dishes_info = dishes_info;
+}
+
+dishes_info_t* globals_get_dishes_info() {
+    return global_dishes_info;
+}
+
+dishes_info_t* dishes_info_init(int menu_size) {
+    dishes_info_t* self = malloc(sizeof(dishes_info_t));
+    if (self == NULL) {
+        fprintf(stdout, RED "[ERROR] Bad malloc() at `dishes_info_t* dishes_info_init()`.\n" NO_COLOR);
+        exit(EXIT_FAILURE);
+    }
+    self -> consumed_dishes = (int*) malloc(sizeof(int)* menu_size);
+    self -> prepared_dishes = (int*) malloc(sizeof(int)* menu_size);
+    for (int i=0; i < menu_size; i++) {
+        self -> prepared_dishes[i] = 0;
+        self -> consumed_dishes[i] = 0;
+    }
+    return self;
+}
+
+void dishes_info_finalize(dishes_info_t* self) {
+    print_simulation_counters(self, global_served_customers);
+    free(self->consumed_dishes);
+    free(self->prepared_dishes);
+    free(self);
+}
+
+// Funções dos mutexes de dishes_info -> consumed
 
 void global_consumed_dishes_mutexes_init(int menu_size) {
     global_consumed_dishes_mutexes = malloc(sizeof(pthread_mutex_t)*menu_size);
@@ -47,21 +79,7 @@ pthread_mutex_t* globals_get_consumed_dishes_mutexes() {
     return global_consumed_dishes_mutexes;
 }
 
-unsigned int globals_get_opened() {
-    return global_opened;
-}
-
-void globals_set_opened(int opened) {
-    global_opened = opened;
-}
-
-void globals_set_dishes_info(dishes_info_t* dishes_info) {
-    global_dishes_info = dishes_info;
-}
-
-dishes_info_t* globals_get_dishes_info() {
-    return global_dishes_info;
-}
+// Funções da global que guarda clientes satisfeitos
 
 void globals_set_served_customers(int n) {
     global_served_customers = n;
@@ -71,20 +89,17 @@ int globals_get_served_customers() {
     return global_served_customers;
 }
 
-dishes_info_t* dishes_info_init(int menu_size) {
-    dishes_info_t* self = malloc(sizeof(dishes_info_t));
-    if (self == NULL) {
-        fprintf(stdout, RED "[ERROR] Bad malloc() at `dishes_info_t* dishes_info_init()`.\n" NO_COLOR);
-        exit(EXIT_FAILURE);
-    }
-    self -> consumed_dishes = (int*) malloc(sizeof(int)* menu_size);
-    self -> prepared_dishes = (int*) malloc(sizeof(int)* menu_size);
-    for (int i=0; i < menu_size; i++) {
-        self -> prepared_dishes[i] = 0;
-        self -> consumed_dishes[i] = 0;
-    }
-    return self;
+// Funções da global que define abertura/fechamento
+
+unsigned int globals_get_opened() {
+    return global_opened;
 }
+
+void globals_set_opened(int opened) {
+    global_opened = opened;
+}
+
+// Função para print final com as variáveis modificadas durante a simulação
 
 void print_simulation_counters(dishes_info_t* info, int served_customers) {
     title();
@@ -105,12 +120,7 @@ void print_simulation_counters(dishes_info_t* info, int served_customers) {
     separator();
 }
 
-void dishes_info_finalize(dishes_info_t* self) {
-    print_simulation_counters(self, global_served_customers);
-    free(self->consumed_dishes);
-    free(self->prepared_dishes);
-    free(self);
-}
+// JÁ EXISTENTES
 
 void globals_set_virtual_clock(virtual_clock_t* virtual_clock) {
     global_virtual_clock = virtual_clock;
@@ -145,6 +155,8 @@ void globals_finalize() {
     conveyor_belt_finalize(global_conveyor_belt);
     virtual_clock_finalize(global_virtual_clock);
     fprintf(stdout, GREEN "[INFO]" RED " GLOBALS FINALIZED!\n");
+    // Finaliza dishes_info global
     dishes_info_finalize(global_dishes_info);
+    // Finaliza mutexes para dishes info -> consumed
     global_consumed_dishes_mutexes_finalize(global_consumed_dishes_mutexes);
 }
