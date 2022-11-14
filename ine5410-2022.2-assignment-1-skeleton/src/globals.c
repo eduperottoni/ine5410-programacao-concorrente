@@ -83,10 +83,10 @@ void print_simulation_counters(dishes_info_t* info, int served_customers) {
 
 void dishes_info_finalize(dishes_info_t* self) {
     print_simulation_counters(self, global_served_customers);
+    free(self->consumed_dishes);
+    free(self->prepared_dishes);
     free(self);
 }
-
-
 
 void globals_set_virtual_clock(virtual_clock_t* virtual_clock) {
     global_virtual_clock = virtual_clock;

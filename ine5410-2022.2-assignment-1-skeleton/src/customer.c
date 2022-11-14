@@ -32,12 +32,13 @@ void* customer_run(void* arg) {
     //sem_wait(&self->_customer_sem);
     //while(self -> _seat_position == -1 && globals_get_opened()); 
 
+    // Caso em que o cliente está bloqueado na fila
     pthread_mutex_lock(&self->_customer_mutex);
     if (!globals_get_opened()){
-        customer_leave(self);
         pthread_exit(NULL);
     }
 
+    // Caso em que o cliente entrou no seats
     int total_wishes = 0;
     for(int i = 0; i < sizeof(self->_wishes) / sizeof(int); i++)
         total_wishes += self->_wishes[i];
@@ -77,6 +78,7 @@ void* customer_run(void* arg) {
     }
     customer_leave(self);
     //msleep(1000000);  // REMOVA ESTE SLEEP APÓS IMPLEMENTAR SUA SOLUÇÃO!
+    customer_finalize(self);
     pthread_exit(NULL);
 }
 
@@ -185,6 +187,8 @@ void customer_leave(customer_t* self) {
             globals_set_served_customers(globals_get_served_customers() + 1);
         pthread_mutex_unlock(&conveyor_belt->_seats_mutex);
     }
+
+    fprintf(stdout, GREEN "[INFO]" NO_COLOR " Customer %d left the shop!\n\n", self->_id);
 }
 
 customer_t* customer_init() {
