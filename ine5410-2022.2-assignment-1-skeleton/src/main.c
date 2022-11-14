@@ -25,6 +25,9 @@ int main (int argc, char** argv) {
     /* Setup dishes information */
     globals_set_dishes_info(dishes_info_init(5));
 
+    /* Setup dishes information mutexes */
+    globals_set_consumed_dishes_mutexes(global_consumed_dishes_mutexes_init(5));
+
     /* Init the Sushi Chef */
     sushi_chef_t* sushi_chef = sushi_chef_init();
 

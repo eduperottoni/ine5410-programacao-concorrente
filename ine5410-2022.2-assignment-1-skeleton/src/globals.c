@@ -23,6 +23,37 @@ virtual_clock_t* global_virtual_clock = NULL;
 conveyor_belt_t* global_conveyor_belt = NULL;
 queue_t* global_queue = NULL;
 
+pthread_mutex_t* global_consumed_dishes_mutexes = NULL;
+
+
+pthread_mutex_t* global_consumed_dishes_mutexes_init(int menu_size) {
+    pthread_mutex_t* self = malloc(sizeof(pthread_mutex_t)*menu_size);
+    if (self == NULL) {
+        fprintf(stdout, RED "[ERROR] Bad malloc() at `pthread_mutex_t* global_consumed_dishes_mutexes_init()`.\n" NO_COLOR);
+        exit(EXIT_FAILURE);
+    }
+    for (int i = 0; i < menu_size; i++)
+        pthread_mutex_init(&self[i], NULL);
+    return self;
+}
+
+void global_consumed_dishes_mutexes_finalize(pthread_mutex_t* self) {
+    int size = sizeof(self) / sizeof(pthread_mutex_t);
+    
+    for (int i = 0; i < size; i++) {
+        pthread_mutex_destroy(&self[i]);
+        free(&self[i]);
+    }
+}
+
+pthread_mutex_t* globals_get_consumed_dishes_mutexes() {
+    return global_consumed_dishes_mutexes;
+}
+
+void globals_set_consumed_dishes_mutexes(pthread_mutex_t* mutexes) {
+    global_consumed_dishes_mutexes = mutexes;
+}
+
 unsigned int globals_get_opened() {
     return global_opened;
 }
@@ -122,4 +153,5 @@ void globals_finalize() {
     virtual_clock_finalize(global_virtual_clock);
     fprintf(stdout, GREEN "GLOBALS FINALIZED!\n" NO_COLOR);
     dishes_info_finalize(global_dishes_info);
+    global_consumed_dishes_mutexes_finalize(global_consumed_dishes_mutexes);
 }

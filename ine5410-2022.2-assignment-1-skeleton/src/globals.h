@@ -7,6 +7,32 @@
 #include "queue.h"
 
 /**
+ * @brief Inicializa lista de mutexes de pratos consumidos
+ * 
+ * @param menu_size número de pratos do menu
+ */
+extern pthread_mutex_t* global_consumed_dishes_mutexes_init(int menu_size);
+
+/**
+ * @brief Finaliza lista de mutexes de pratos consumidos
+ * 
+ * @param self
+ */
+extern void global_consumed_dishes_mutexes_finalize(pthread_mutex_t* self);
+
+/**
+ * @brief Seta lista global de mutexes que protege lista de pratos consumidos
+ * 
+ * @param mutexes
+ */
+extern void globals_set_consumed_dishes_mutexes(pthread_mutex_t* mutexes);
+
+/**
+ * @brief Retorna lista global de mutexes dos pratos consumidos
+ */
+extern pthread_mutex_t* globals_get_consumed_dishes_mutexes();
+
+/**
  * @brief Inicia um relógio virtual (de modo global)
  * 
  * @param virtual_clock 
@@ -75,7 +101,7 @@ typedef struct dishes_info {
 /**
  * @brief Inicia informações sobre pratos preparados e consumidos
  * 
- * @param counter
+ * @param dishes_info
  */
 void globals_set_dishes_info(dishes_info_t *dishes_info);
 
@@ -114,7 +140,6 @@ void globals_set_opened(int opened);
  * @brief imprime resultados da simulação
  */
 void print_simulation_counters(dishes_info_t* info, int served_customers);
-
 
 /**
  * @brief Finaliza todas as variáveis globais.

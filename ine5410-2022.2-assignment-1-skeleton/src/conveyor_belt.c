@@ -22,14 +22,19 @@ void* conveyor_belt_run(void* arg) {
             msleep(CONVEYOR_MOVING_PERIOD/virtual_clock->clock_speed_multiplier);
 
             /*CRIAR SEMAFORO QUE CONTA NUMERO DE CLIENTES*/
-
             //tranca os clientes
             // for(int i = 0; i < self->_size; i++) {
             //     sem_wait(&self->_customers_sem);
             // }
             
+            for (int i = 0; i < self->_size; i++){
+                pthread_mutex_lock(&self->_individual_food_slots[i]);
+            }
+
             pthread_mutex_lock(&self->_food_slots_mutex);
-            /* for do tamanho de clientes sentados -> wait num semáforo iniciado com o número de clientes sentados*/
+
+            //global_qtd_moves++;
+
             int last = self->_food_slots[0];
             for (int i=0; i<self->_size-1; i++) {
                 //pthread_mutex_lock(&self->_each_food_slots[i]);
@@ -49,8 +54,14 @@ void* conveyor_belt_run(void* arg) {
             //     sem_post(&self->_customers_sem);
             // }
 
+            //global_is_moving = 0;
+
             pthread_mutex_unlock(&self->_food_slots_mutex);
             print_conveyor_belt(self);  
+
+            for (int i = 0; i < self->_size; i++){
+                pthread_mutex_unlock(&self->_individual_food_slots[i]);
+            }
         }
         
     }
@@ -67,7 +78,7 @@ conveyor_belt_t* conveyor_belt_init(config_t* config) {
     self->_size = config->conveyor_belt_capacity;
     self->_seats = (int*) malloc(sizeof(int)* self->_size);
     self->_food_slots = (int*) malloc(sizeof(int)* self->_size);
-    self->_each_food_slots = (pthread_mutex_t*) malloc(sizeof(pthread_mutex_t)*self->_size);
+    self->_individual_food_slots = (pthread_mutex_t*) malloc(sizeof(pthread_mutex_t)*self->_size);
     for (int i=0; i<self->_size; i++) {
         self->_food_slots[i] = -1;
         self->_seats[i] = -1;
@@ -80,7 +91,7 @@ conveyor_belt_t* conveyor_belt_init(config_t* config) {
     sem_init(&self->_full_slots_sem, 0, 0);
     // sem_init(&self->_customers_sem, 0, self->_size);
     for (int i = 0; i < self->_size; i++)
-        pthread_mutex_init(&(self->_each_food_slots[i]), NULL);
+        pthread_mutex_init(&(self->_individual_food_slots[i]), NULL);
     pthread_create(&self->thread, NULL, conveyor_belt_run, (void *) self);
     print_conveyor_belt(self);
     return self;
@@ -97,11 +108,11 @@ void conveyor_belt_finalize(conveyor_belt_t* self) {
     sem_destroy(&self->_free_seats_sem);
     // sem_destroy(&self->_customers_sem);
     for (int i = 0; i < self->_size; i++)
-        pthread_mutex_destroy(&(self->_each_food_slots[i]));
+        pthread_mutex_destroy(&(self->_individual_food_slots[i]));
     // Desaloca memória dos ponteiros de conveyor_belt_t
     free(self->_seats);
     free(self->_food_slots);
-    free(self->_each_food_slots);
+    free(self->_individual_food_slots);
     free(self);
 }
 

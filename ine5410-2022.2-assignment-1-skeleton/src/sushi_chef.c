@@ -20,12 +20,14 @@ void* sushi_chef_run(void* arg) {
     virtual_clock_t* global_clock = globals_get_virtual_clock();
 
     sushi_chef_seat(self);
+    // Enquanto restaurante estiver aberto chefe executa suas funções
     while (globals_get_opened()) {
         enum menu_item next_dish = rand() % 5;
         sushi_chef_prepare_food(self, next_dish);
         if (!globals_get_opened()) break;
         sushi_chef_place_food(self, next_dish);
     }
+    //Quando restaurante fecha, sushi chef vai embora
     sushi_chef_leave(self);
     pthread_exit(NULL);
 }
@@ -46,6 +48,7 @@ void sushi_chef_seat(sushi_chef_t* self) {
     fprintf(stdout, GREEN "[INFO]" NO_COLOR " Sushi Chef %d arrived at the Sushi Shop and wants to seat!\n", self->_id);
     
     //while (TRUE) {
+    //Para todos assentos vagos, 
     for (int i=0; i<conveyor->_size; i++) {
         pthread_mutex_lock(&conveyor->_seats_mutex);
         if (conveyor->_seats[i] == -1) {
@@ -77,6 +80,7 @@ void sushi_chef_leave(sushi_chef_t* self) {
     /* INSIRA SUA LÓGICA AQUI */
     pthread_mutex_lock(&conveyor->_seats_mutex);
     conveyor->_seats[self->_seat_position] = -1;
+    //Incrementa espaços vazios
     sem_post(&conveyor->_free_seats_sem);
     pthread_mutex_unlock(&conveyor->_seats_mutex);
 
@@ -104,6 +108,7 @@ void sushi_chef_place_food(sushi_chef_t* self, enum menu_item dish) {
 
     pthread_mutex_lock(&(conveyor_belt -> _food_slots_mutex));
 
+
     //enquanto tiver comida na frente do chef, esteira pode se mover
     if(conveyor_belt -> _food_slots[self -> _seat_position] != -1) {
         while (conveyor_belt -> _food_slots[self -> _seat_position] != -1) {
@@ -113,19 +118,23 @@ void sushi_chef_place_food(sushi_chef_t* self, enum menu_item dish) {
         pthread_mutex_lock(&(conveyor_belt -> _food_slots_mutex));
     }
 
-    //Wait no semáforo vazio -> se estiver cheio, bloqueia a thread
-    //sem_wait(&(conveyor_belt -> _empty_slots_sem));
+    if (conveyor_belt -> _food_slots[self -> _seat_position] == -1) {
+        //Wait no semáforo vazio -> se estiver cheio, bloqueia a thread
+        //sem_wait(&(conveyor_belt -> _empty_slots_sem));
 
-    //Proteger linha abaixo
-    pthread_mutex_lock(&conveyor_belt->_each_food_slots[self->_seat_position]);
-    conveyor_belt -> _food_slots[self -> _seat_position] = dish;
-    pthread_mutex_unlock(&conveyor_belt->_each_food_slots[self->_seat_position]);
+        //Proteger linha abaixo
+        //pthread_mutex_lock(&conveyor_belt->_individual_food_slots[self->_seat_position]);
+        conveyor_belt -> _food_slots[self -> _seat_position] = dish;
+        //pthread_mutex_unlock(&conveyor_belt->_individual_food_slots[self->_seat_position]);
 
-    //Incrementa variável global
-    dishes_info -> prepared_dishes[dish]++;
+        //Incrementa variável global
+        
+        
+        dishes_info -> prepared_dishes[dish]++;
 
-    print_virtual_time(globals_get_virtual_clock());
-    fprintf(stdout, GREEN "[INFO]" NO_COLOR " Sushi Chef %d placed %u at conveyor->_foot_slot[%d]!\n", self->_id, dish, self->_seat_position);
+        print_virtual_time(globals_get_virtual_clock());
+        fprintf(stdout, GREEN "[INFO]" NO_COLOR " Sushi Chef %d placed %u at conveyor->_foot_slot[%d]!\n", self->_id, dish, self->_seat_position);
+    }
 
     pthread_mutex_unlock(&(conveyor_belt -> _food_slots_mutex));
 

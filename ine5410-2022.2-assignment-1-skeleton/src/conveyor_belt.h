@@ -25,7 +25,7 @@ typedef struct conveyor_belt {
     /*ADICIONADO*/
     sem_t _empty_slots_sem, _full_slots_sem;
     sem_t _free_seats_sem;
-    pthread_mutex_t* _each_food_slots;
+    pthread_mutex_t* _individual_food_slots;
     pthread_t thread;
 } conveyor_belt_t;
 

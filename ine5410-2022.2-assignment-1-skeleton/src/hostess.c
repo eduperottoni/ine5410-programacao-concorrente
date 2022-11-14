@@ -23,9 +23,9 @@ int hostess_check_for_a_free_conveyor_seat() {
     fprintf(stdout, GREEN "[INFO]" NO_COLOR " O Hostess está procurando por um assento livre...\n");
     print_conveyor_belt(conveyor);
 
-    //while (TRUE) {
-
+    //Percorre todos lugares da esteira
     for (int i=0; i<conveyor->_size; i++) {
+        //Caso o lugar esteja livre e não esteja ocupado pelo chefe, hostess aloca um cliente
         if (conveyor->_seats[i] == -1 && i !=0) {  // Atenção à regra! (-1 = livre, 0 = sushi_chef, 1 = customer)
             printf("LUGAR %d LIVRE", i);
             print_virtual_time(globals_get_virtual_clock());
@@ -34,7 +34,6 @@ int hostess_check_for_a_free_conveyor_seat() {
         }   
     }
     msleep(120000/virtual_clock->clock_speed_multiplier);  // Não remova esse sleep!
-    //}
 }
 
 void hostess_guide_first_in_line_customer_to_conveyor_seat(int seat) {
@@ -54,13 +53,15 @@ void hostess_guide_first_in_line_customer_to_conveyor_seat(int seat) {
     queue_t* queue = globals_get_queue();
     customer_t* customer = queue_remove(queue);
 
-    //seats_mutex inserido abaixo
+    //Cliente só pode se sentar quando os assentos não estiverem sendo modificados por outras funções - Exclusão mútua
     pthread_mutex_lock(&conveyor->_seats_mutex);
     conveyor->_seats[seat] = 1;
-
-    //sem_post(&customer->_customer_sem);
     pthread_mutex_unlock(&conveyor->_seats_mutex);
+    
+    //Determina assento do cliente
     customer->_seat_position = seat;
+     
+    //Libera mutex de cada cliente para executar suas funções ( evita espera ocupada do cliente ficar toda hora observando se tem um novo cliente )
     pthread_mutex_unlock(&customer->_customer_mutex);
 
     print_virtual_time(globals_get_virtual_clock());
@@ -82,14 +83,14 @@ void* hostess_run() {
     virtual_clock_t* virtual_clock = globals_get_virtual_clock();
     queue_t* queue = globals_get_queue();
     conveyor_belt_t* conveyor = globals_get_conveyor_belt();
-    
-    while (globals_get_opened()) {  // Adicione a lógica para que o Hostess realize o fechamento do Sushi Shop!
-        
-        if (queue->_length > 0) {
 
-            //Decrementa semáforo
-            
+    //Enquanto restaurante estiver aberto Hostess executa suas funções
+    while (globals_get_opened()) {  // Adicione a lógica para que o Hostess realize o fechamento do Sushi Shop!
+
+        if (queue->_length > 0) {
+            //Diminui-se um assento vago da esteira (retirou espera ocupada, pois só entra nas próximas funções quando estiver um assento livre de certeza)
             sem_wait(&conveyor->_free_seats_sem);
+            //
             if (!globals_get_opened()) break;
 
             int seat = hostess_check_for_a_free_conveyor_seat();
@@ -97,9 +98,8 @@ void* hostess_run() {
         }
         msleep(3000/virtual_clock->clock_speed_multiplier);  // Não remova esse sleep!
     }
-
-    //FECHAMENTO
-    fprintf(stdout, RED "SUSHI SHOP MUST BE CLOSED!\n" NO_COLOR);
+    
+    //FINALIZA A FILA, que irá finalizar os clientes sentados e os aguardando na fila
     queue_finalize(queue);
     pthread_exit(NULL);
 }
