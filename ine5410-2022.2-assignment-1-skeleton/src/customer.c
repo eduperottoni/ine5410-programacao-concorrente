@@ -131,8 +131,8 @@ void customer_eat(customer_t* self, enum menu_item food) {
             ENTÃO UM self->_wishes = [0,0,1,2,0] CONDIZ COM O DESEJO DE COMER 1 RAMÉN E 2 ONIGUIRIS.
     */
 
-   dishes_info_t* dishes_info = globals_get_dishes_info();
-   pthread_mutex_t* consumed_dishes_mutexes = globals_get_consumed_dishes_mutexes();
+    dishes_info_t* dishes_info = globals_get_dishes_info();
+    pthread_mutex_t* consumed_dishes_mutexes = globals_get_consumed_dishes_mutexes();
 
     /* INSIRA SUA LÓGICA AQUI */
     // Tira a comida da lista de desejos do cliente

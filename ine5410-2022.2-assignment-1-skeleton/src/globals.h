@@ -9,23 +9,16 @@
 /**
  * @brief Inicializa lista de mutexes de pratos consumidos
  * 
- * @param menu_size número de pratos do menu
+ * @param menu_size: número de pratos do menu
  */
-extern pthread_mutex_t* global_consumed_dishes_mutexes_init(int menu_size);
+extern void global_consumed_dishes_mutexes_init(int menu_size);
 
 /**
  * @brief Finaliza lista de mutexes de pratos consumidos
  * 
- * @param self
+ * @param self: ponteiro para o array de mutexes
  */
 extern void global_consumed_dishes_mutexes_finalize(pthread_mutex_t* self);
-
-/**
- * @brief Seta lista global de mutexes que protege lista de pratos consumidos
- * 
- * @param mutexes
- */
-extern void globals_set_consumed_dishes_mutexes(pthread_mutex_t* mutexes);
 
 /**
  * @brief Retorna lista global de mutexes dos pratos consumidos

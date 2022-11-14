@@ -26,32 +26,25 @@ queue_t* global_queue = NULL;
 pthread_mutex_t* global_consumed_dishes_mutexes = NULL;
 
 
-pthread_mutex_t* global_consumed_dishes_mutexes_init(int menu_size) {
-    pthread_mutex_t* self = malloc(sizeof(pthread_mutex_t)*menu_size);
-    if (self == NULL) {
+void global_consumed_dishes_mutexes_init(int menu_size) {
+    global_consumed_dishes_mutexes = malloc(sizeof(pthread_mutex_t)*menu_size);
+    if (global_consumed_dishes_mutexes == NULL) {
         fprintf(stdout, RED "[ERROR] Bad malloc() at `pthread_mutex_t* global_consumed_dishes_mutexes_init()`.\n" NO_COLOR);
         exit(EXIT_FAILURE);
     }
     for (int i = 0; i < menu_size; i++)
-        pthread_mutex_init(&self[i], NULL);
-    return self;
+        pthread_mutex_init(&global_consumed_dishes_mutexes[i], NULL);
 }
 
 void global_consumed_dishes_mutexes_finalize(pthread_mutex_t* self) {
-    int size = sizeof(self) / sizeof(pthread_mutex_t);
-    
-    for (int i = 0; i < size; i++) {
+    for (int i = 0; i < 5; i++) {
         pthread_mutex_destroy(&self[i]);
-        free(&self[i]);
     }
+    free(self);
 }
 
 pthread_mutex_t* globals_get_consumed_dishes_mutexes() {
     return global_consumed_dishes_mutexes;
-}
-
-void globals_set_consumed_dishes_mutexes(pthread_mutex_t* mutexes) {
-    global_consumed_dishes_mutexes = mutexes;
 }
 
 unsigned int globals_get_opened() {
@@ -96,14 +89,14 @@ dishes_info_t* dishes_info_init(int menu_size) {
 void print_simulation_counters(dishes_info_t* info, int served_customers) {
     title();
     fprintf(stdout, MAGENTA "Simulation counters results:\n" NO_COLOR);
-    fprintf(stdout, CYAN  " Total customers served with fulfilled wishes => %d" NO_COLOR "\n", served_customers);
+    fprintf(stdout, CYAN  "\n Total customers served with fullfilled wishes => %d" NO_COLOR "\n\n", served_customers);
     fprintf(stdout, CYAN  " Prepared dishes " NO_COLOR "\n");
     fprintf(stdout, GREEN "  Sushi                   " NO_COLOR "%d\n", info->prepared_dishes[0]);
     fprintf(stdout, GREEN "  Dango                   " NO_COLOR "%d\n", info->prepared_dishes[1]);
     fprintf(stdout, GREEN "  Ramen                   " NO_COLOR "%d\n", info->prepared_dishes[2]);
     fprintf(stdout, GREEN "  Onigiri                 " NO_COLOR "%d\n", info->prepared_dishes[3]);
     fprintf(stdout, GREEN "  Tofu                    " NO_COLOR "%d\n", info->prepared_dishes[4]);
-    fprintf(stdout, CYAN  " Consumed dishes " NO_COLOR "\n");
+    fprintf(stdout, CYAN  "\n Consumed dishes " NO_COLOR "\n");
     fprintf(stdout, GREEN "  Sushi                   " NO_COLOR "%d\n", info->consumed_dishes[0]);
     fprintf(stdout, GREEN "  Dango                   " NO_COLOR "%d\n", info->consumed_dishes[1]);
     fprintf(stdout, GREEN "  Ramen                   " NO_COLOR "%d\n", info->consumed_dishes[2]);
@@ -151,7 +144,7 @@ queue_t* globals_get_queue() {
 void globals_finalize() {
     conveyor_belt_finalize(global_conveyor_belt);
     virtual_clock_finalize(global_virtual_clock);
-    fprintf(stdout, GREEN "GLOBALS FINALIZED!\n" NO_COLOR);
+    fprintf(stdout, GREEN "[INFO]" RED " GLOBALS FINALIZED!\n");
     dishes_info_finalize(global_dishes_info);
     global_consumed_dishes_mutexes_finalize(global_consumed_dishes_mutexes);
 }

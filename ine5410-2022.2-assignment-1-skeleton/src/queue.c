@@ -77,12 +77,11 @@ void queue_finalize(queue_t* self) {
     for (int i=0; i<self->_length; i=i+1) {
         item = self->_first;
         self->_first = self->_first->_next;
-        printf("FREEING CUSTOMER %d\n", item->_customer->_id);
         customer_finalize(item->_customer);
         free(item);
     }
     pthread_join(self->thread, NULL);
-    fprintf(stdout, GREEN "CUSTOMER QUEUE FINALIZED!\n" NO_COLOR);
+    fprintf(stdout, GREEN "[INFO]" RED " CUSTOMER QUEUE FINALIZED!\n");
     free(self);
 }
 

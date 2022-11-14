@@ -98,7 +98,7 @@ void* hostess_run() {
         }
         msleep(3000/virtual_clock->clock_speed_multiplier);  // Não remova esse sleep!
     }
-    
+
     //FINALIZA A FILA, que irá finalizar os clientes sentados e os aguardando na fila
     queue_finalize(queue);
     pthread_exit(NULL);
@@ -119,6 +119,6 @@ void hostess_finalize(hostess_t* self) {
     /* NÃO PRECISA ALTERAR ESSA FUNÇÃO */
 
     pthread_join(self->thread, NULL);
-    fprintf(stdout, GREEN "HOSTESS FINALIZED!\n" NO_COLOR);
+    fprintf(stdout, GREEN "[INFO]" RED " HOSTESS FINALIZED!\n");
     free(self);
 }

@@ -41,6 +41,7 @@ virtual_clock_t* virtual_clock_init(config_t* config) {
 void virtual_clock_finalize(virtual_clock_t* self) {
     /* NÃO PRECISA ALTERAR ESSA FUNÇÃO */
     pthread_join(self->thread, NULL);
+    fprintf(stdout, GREEN "[INFO]" RED " VIRTUAL CLOCK FINALIZED!\n");
     free(self);
 }
 

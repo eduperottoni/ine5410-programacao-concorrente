@@ -203,7 +203,7 @@ sushi_chef_t* sushi_chef_init() {
 void sushi_chef_finalize(sushi_chef_t* self) {
     /* NÃO PRECISA ALTERAR ESSA FUNÇÃO */
     pthread_join(self->thread, NULL);
-    fprintf(stdout, GREEN "SUSHI CHEF FINALIZED!\n" NO_COLOR);
+    fprintf(stdout, GREEN "[INFO]" RED " SUSHI CHEF FINALIZED!\n");
     free(self);
 }
 
