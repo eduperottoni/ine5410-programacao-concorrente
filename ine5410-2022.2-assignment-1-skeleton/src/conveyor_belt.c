@@ -20,12 +20,6 @@ void* conveyor_belt_run(void* arg) {
             print_conveyor_belt(self);
             
             msleep(CONVEYOR_MOVING_PERIOD/virtual_clock->clock_speed_multiplier);
-
-            /*CRIAR SEMAFORO QUE CONTA NUMERO DE CLIENTES*/
-            //tranca os clientes
-            // for(int i = 0; i < self->_size; i++) {
-            //     sem_wait(&self->_customers_sem);
-            // }
             
             for (int i = 0; i < self->_size; i++){
                 pthread_mutex_lock(&self->_individual_food_slots[i]);
