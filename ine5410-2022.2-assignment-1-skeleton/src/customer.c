@@ -27,18 +27,14 @@ void* customer_run(void* arg) {
     conveyor_belt_t* conveyor = globals_get_conveyor_belt();
 
     /* INSIRA SUA LÓGICA AQUI */
-    //espera até ser colocado em um assento (seat_position != -1)
 
-    //sem_wait(&self->_customer_sem);
-    //while(self -> _seat_position == -1 && globals_get_opened()); 
-
-    //Tranca o mutex de cada cliente que entra
+    //Bloqueia cada cliente que entra na fila - evita espera ocupada
     pthread_mutex_lock(&self->_customer_mutex);
     if (!globals_get_opened()){
         pthread_exit(NULL);
     }
 
-    // Caso em que o cliente entrou no seats
+    // Cliente estrou no seats e calcula seus wishes
     int total_wishes = 0;
     for(int i = 0; i < sizeof(self->_wishes) / sizeof(int); i++)
         total_wishes += self->_wishes[i];
@@ -75,7 +71,6 @@ void* customer_run(void* arg) {
         if (food > -1) customer_eat(self, food);
     }
     customer_leave(self);
-    //msleep(1000000);  // REMOVA ESTE SLEEP APÓS IMPLEMENTAR SUA SOLUÇÃO!
     customer_finalize(self);
     pthread_exit(NULL);
 }
@@ -95,7 +90,8 @@ void customer_pick_food(int food_slot) {
     /* INSIRA SUA LÓGICA AQUI */
     conveyor_belt_t* conveyor = globals_get_conveyor_belt();
     
-    //Lugar da esteira que o cliente pegou a comida fica vazio
+    // Lugar da esteira que o cliente pegou a comida fica vazio
+    // Mutex da posição já lockado em run
     conveyor-> _food_slots[food_slot] = -1;
 
     printf("CLIENTE PEGOU A COMIDA DO FOOD SLOT %d\n", food_slot);
@@ -117,16 +113,12 @@ void customer_eat(customer_t* self, enum menu_item food) {
 
     /* INSIRA SUA LÓGICA AQUI */
     // Tira a comida da lista de desejos do cliente
-
     self->_wishes[food]--;
-    //Incrementa variável global
 
-    //mutex para proteger os consumidos
+    //Incrementa variável global - mutex para exclusão mútua
     pthread_mutex_lock(&consumed_dishes_mutexes[food]);
     dishes_info -> consumed_dishes[food]++;
     pthread_mutex_unlock(&consumed_dishes_mutexes[food]);
-
-    //mutex para proteger todos os consumidos
 
     /* NÃO EDITE O CONTEÚDO ABAIXO */
     virtual_clock_t* global_clock = globals_get_virtual_clock();
@@ -207,18 +199,21 @@ customer_t* customer_init() {
         self->_wishes[i] = (rand() % 4);
     }
     self->_seat_position = -1;
+
     // Mutex para cada cliente, que se inicia trancado. 
-    // ( O Hostess que libera/aloca os clientes para começarem executar suas funções ).
+    // O Hostess que libera os clientes para começarem executar suas funções
     pthread_mutex_init(&self->_customer_mutex, NULL);
     pthread_mutex_lock(&self->_customer_mutex);
+
     pthread_create(&self->thread, NULL, customer_run, (void *) self);
     return self;
 }
 
 void customer_finalize(customer_t* self) {
     /* NÃO PRECISA ALTERAR ESSA FUNÇÃO */
-    // Libera o mutex de cada cliente que executou suas funções
+    // Libera o mutex de cada cliente que executou suas funções para finalização
     pthread_mutex_unlock(&self->_customer_mutex);
+
     pthread_join(self->thread, NULL);
     pthread_mutex_destroy(&self->_customer_mutex);
     fprintf(stdout, CYAN "[FREE]" NO_COLOR " Customer %d finalized!\n", self->_id);
