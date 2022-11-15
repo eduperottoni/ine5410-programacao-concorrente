@@ -10,6 +10,8 @@
 void* virtual_clock_run(void* arg) {
     /* ESSA FUNÇÃO JÁ POSSUÍ A LÓGICA BÁSICA DE FUNCIONAMENTO DO RELÓGIO VIRTUAL */
     virtual_clock_t* self = (virtual_clock_t*) arg;
+
+    //Executa função enquanto restaurante estiver aberto
     while (globals_get_opened()) {
         if (self->current_time >= self->closing_time) {
             //Seta global de restaurante aberto como false

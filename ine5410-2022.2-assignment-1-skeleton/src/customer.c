@@ -93,8 +93,6 @@ void customer_pick_food(int food_slot) {
     // Lugar da esteira que o cliente pegou a comida fica vazio
     // Mutex da posição já lockado em run
     conveyor-> _food_slots[food_slot] = -1;
-
-    printf("CLIENTE PEGOU A COMIDA DO FOOD SLOT %d\n", food_slot);
 }
 
 void customer_eat(customer_t* self, enum menu_item food) {

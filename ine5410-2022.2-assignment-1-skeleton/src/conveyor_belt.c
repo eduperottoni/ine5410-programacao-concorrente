@@ -21,7 +21,7 @@ void* conveyor_belt_run(void* arg) {
             
             msleep(CONVEYOR_MOVING_PERIOD/virtual_clock->clock_speed_multiplier);
             
-            // Tranca os clientes para que não acessem as posições
+            // Tranca os clientes para que não acessem as posições dos slots enquanto esteira estiver se movendo
             for (int i = 0; i < self->_size; i++){
                 pthread_mutex_lock(&self->_individual_food_slots[i]);
             }
@@ -42,7 +42,7 @@ void* conveyor_belt_run(void* arg) {
             pthread_mutex_unlock(&self->_food_slots_mutex);
             print_conveyor_belt(self);  
 
-            // Libera os clientes para acessar as posições
+            // Libera os clientes para acessar as posições dos slots a sua essquerda, meio e direita
             for (int i = 0; i < self->_size; i++){
                 pthread_mutex_unlock(&self->_individual_food_slots[i]);
             }
@@ -164,5 +164,5 @@ void print_conveyor_belt(conveyor_belt_t* self) {
     fprintf(stdout, NO_COLOR "\n    ]\n");
     fprintf(stdout, NO_COLOR "}\n" NO_COLOR);
     //Adicionado
-    fprintf(stdout, GREEN "CLIENTES_SERVIDOS: %d", globals_get_served_customers());
+    fprintf(stdout, CYAN "CLIENTES_SERVIDOS: %d\n", globals_get_served_customers());
 }
