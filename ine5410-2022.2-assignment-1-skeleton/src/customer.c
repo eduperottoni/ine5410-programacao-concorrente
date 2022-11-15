@@ -55,40 +55,22 @@ void* customer_run(void* arg) {
         int food = -1;
 
         for(int i = min_position; i <= max_position; i++) {
-            
-            //sem_wait(&conveyor->_customers_sem);
-            // Variável global modificada na conveyor e lida aqui
-            // Conferir se variável
-            // if i = -1
-
-            //if (global_is_moving()) {
-            //    break;
-            //}else{
-                
-            
-            //}
             pthread_mutex_lock(&conveyor->_individual_food_slots[i]);
-            // if global_qtd_moves > 0
+            
+            // Caso em que não há nada na posição i -> desocupa a posição e vai para a próxima
             if (conveyor->_food_slots[i] == -1) {
-                //trylock(food_slots_mutex) && global_qtd_moves
-                //se trylock retornar zero -> esteira não está se movendo
                 pthread_mutex_unlock(&conveyor->_individual_food_slots[i]);
-                //se trylock
-                // 
                 continue;
             }
+            // Caso em que o que está na posição é desejado -> realiza o pick food
             if (self->_wishes[conveyor->_food_slots[i]] > 0) {
                 food = conveyor -> _food_slots[i];
-                //
                 customer_pick_food(i);
-                //
                 total_wishes--;
                 pthread_mutex_unlock(&conveyor->_individual_food_slots[i]);
                 break;
             }
             pthread_mutex_unlock(&conveyor->_individual_food_slots[i]);
-
-            //sem_post(&conveyor->_customers_sem);
         }
         if (food > -1) customer_eat(self, food);
     }
@@ -114,9 +96,8 @@ void customer_pick_food(int food_slot) {
     conveyor_belt_t* conveyor = globals_get_conveyor_belt();
     
     //Lugar da esteira que o cliente pegou a comida fica vazio
-    pthread_mutex_lock(&conveyor->_food_slots_mutex);
     conveyor-> _food_slots[food_slot] = -1;
-    pthread_mutex_unlock(&conveyor->_food_slots_mutex);
+
     printf("CLIENTE PEGOU A COMIDA DO FOOD SLOT %d\n", food_slot);
 }
 
