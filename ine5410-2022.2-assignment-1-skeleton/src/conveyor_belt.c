@@ -26,6 +26,7 @@ void* conveyor_belt_run(void* arg) {
                 pthread_mutex_lock(&self->_individual_food_slots[i]);
             }
 
+            // Tranca o mutex de todos os slots - impede o sushi chef de inserir comida
             pthread_mutex_lock(&self->_food_slots_mutex);
 
             int last = self->_food_slots[0];
@@ -37,7 +38,7 @@ void* conveyor_belt_run(void* arg) {
             print_virtual_time(globals_get_virtual_clock());
             fprintf(stdout, GREEN "[INFO]" NO_COLOR " Conveyor belt finished moving...\n");
             
-
+            // Libera o mutex de todos os slots - libera o sushi chef a inserir comida
             pthread_mutex_unlock(&self->_food_slots_mutex);
             print_conveyor_belt(self);  
 
@@ -90,9 +91,11 @@ void conveyor_belt_finalize(conveyor_belt_t* self) {
     sem_destroy(&self->_empty_slots_sem);
     sem_destroy(&self->_full_slots_sem);
     sem_destroy(&self->_free_seats_sem);
-    
+
+    // Destrói lista de mutexes individuais
     for (int i = 0; i < self->_size; i++)
         pthread_mutex_destroy(&(self->_individual_food_slots[i]));
+    
     // Desaloca memória dos ponteiros de conveyor_belt_t
     free(self->_seats);
     free(self->_food_slots);
@@ -161,6 +164,5 @@ void print_conveyor_belt(conveyor_belt_t* self) {
     fprintf(stdout, NO_COLOR "\n    ]\n");
     fprintf(stdout, NO_COLOR "}\n" NO_COLOR);
     //Adicionado
-    //printf("CLIENTES_SERVIDOS: %d", globals_get_served_customers());
     fprintf(stdout, GREEN "CLIENTES_SERVIDOS: %d", globals_get_served_customers());
 }
