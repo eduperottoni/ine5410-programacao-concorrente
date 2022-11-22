@@ -110,34 +110,26 @@ void sushi_chef_place_food(sushi_chef_t* self, enum menu_item dish) {
     print_virtual_time(globals_get_virtual_clock());
     fprintf(stdout, GREEN "[INFO]" NO_COLOR " Sushi Chef %d wants to place %u at conveyor->_foot_slot[%d]!\n", self->_id, dish, self->_seat_position);
 
-    /* INSIRA SUA LÓGICA AQUI */
-    // Garante que a esteira não estará se movendo
-    pthread_mutex_lock(&(conveyor_belt -> _food_slots_mutex));
-
-    //enquanto tiver comida na frente do chef, esteira pode se mover
-    if(conveyor_belt -> _food_slots[self -> _seat_position] != -1) {
-        while (conveyor_belt -> _food_slots[self -> _seat_position] != -1) {
-            //esteira se move
-            pthread_mutex_unlock(&(conveyor_belt -> _food_slots_mutex));
-        }
-        // Se a posição não estiver vazia, acessa o mutex
-        pthread_mutex_lock(&(conveyor_belt -> _food_slots_mutex));
-    }
-
-    if (conveyor_belt -> _food_slots[self -> _seat_position] == -1) {
-        
+    // Enquanto estiver aberto
+    while (globals_get_opened()) {
         // É garantido que a esteira não irá se mover
-        conveyor_belt -> _food_slots[self -> _seat_position] = dish;
-
-        //Incrementa variável global
-        dishes_info -> prepared_dishes[dish]++;
-
-        print_virtual_time(globals_get_virtual_clock());
-        fprintf(stdout, GREEN "[INFO]" NO_COLOR " Sushi Chef %d placed %u at conveyor->_foot_slot[%d]!\n", self->_id, dish, self->_seat_position);
-    }
-
-    // Libera o mutex dos slots
-    pthread_mutex_unlock(&(conveyor_belt -> _food_slots_mutex));
+        pthread_mutex_lock(&(conveyor_belt -> _individual_food_slots[self->_seat_position]));
+        if (conveyor_belt -> _food_slots[self -> _seat_position] == -1) {
+            // Insere prato no slot
+            conveyor_belt -> _food_slots[self -> _seat_position] = dish;
+            //Incrementa variável global
+            dishes_info -> prepared_dishes[dish]++;
+            
+            print_virtual_time(globals_get_virtual_clock());
+            fprintf(stdout, GREEN "[INFO]" NO_COLOR " Sushi Chef %d placed %u at conveyor->_foot_slot[%d]!\n", self->_id, dish, self->_seat_position);
+            pthread_mutex_unlock(&(conveyor_belt -> _individual_food_slots[self->_seat_position]));
+            break;
+        } else {
+            //esteira se move
+            pthread_mutex_unlock(&(conveyor_belt -> _individual_food_slots[self->_seat_position]));
+            continue;
+        }
+    } 
 }
 
 void sushi_chef_prepare_food(sushi_chef_t* self, enum menu_item menu_item) {
