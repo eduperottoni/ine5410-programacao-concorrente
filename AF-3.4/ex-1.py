@@ -45,8 +45,8 @@ for i in range(qtd_consumidoras):
   consumidoras.append(Thread(target=consumidor))
   consumidoras[i].start()
 
-for i in range(2):
+for i in range(qtd_produtoras):
   produtoras[i].join()
 
-for i in range(2):
+for i in range(qtd_consumidoras):
   consumidoras[i].join()
