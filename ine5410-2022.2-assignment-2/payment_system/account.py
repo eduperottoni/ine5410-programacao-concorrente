@@ -81,7 +81,9 @@ class Account:
         else:
             overdrafted_amount = abs(self.balance - amount)
             if self.overdraft_limit >= overdrafted_amount:
-                self.balance -= amount
+                # Taxa sobre o valor do cheque especial
+                overdrafted_tax = 0.05 * overdrafted_amount
+                self.balance -= (amount + overdrafted_tax)
                 LOGGER.info(f"withdraw({amount}) successful with overdraft!")
                 return True
             else:

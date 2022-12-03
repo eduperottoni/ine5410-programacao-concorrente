@@ -46,6 +46,8 @@ class Bank():
         self.operating          = False
         self.accounts           = []
         self.transaction_queue  = []
+        self.generator = None
+        self.payment_processors = []
 
 
     def new_account(self, balance: int = 0, overdraft_limit: int = 0) -> None:

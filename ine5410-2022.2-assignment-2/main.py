@@ -46,6 +46,8 @@ if __name__ == "__main__":
     
     # Cria os Bancos Nacionais e popula a lista global `banks`:
     for i, currency in enumerate(Currency):
+        print(i)
+        print(currency)
         
         # Cria Banco Nacional
         bank = Bank(_id=i, currency=currency)
@@ -61,25 +63,45 @@ if __name__ == "__main__":
         # Adiciona banco na lista global de bancos
         banks.append(bank)
 
+        # Seta operando como True 
+        bank.operating = True
+
     # Inicializa gerador de transações e processadores de pagamentos para os Bancos Nacionais:
     for i, bank in enumerate(banks):
         # Inicializa um TransactionGenerator thread por banco:
-        TransactionGenerator(_id=i, bank=bank).start()
+        transaction = TransactionGenerator(_id=i, bank=bank)
+        bank.generator = transaction
+        transaction.start()
+
         # Inicializa um PaymentProcessor thread por banco.
         # Sua solução completa deverá funcionar corretamente com múltiplos PaymentProcessor threads para cada banco.
-        PaymentProcessor(_id=i, bank=bank).start()
-        
+        for j in range(2):
+            payment_proc = PaymentProcessor(_id=j, bank=bank)
+            bank.payment_processors.append(payment_proc)
+            payment_proc.start()
+     
     # Enquanto o tempo total de simuação não for atingido:
     while t < total_time:
         # Aguarda um tempo aleatório antes de criar o próximo cliente:
-        dt = randint(0, 3)
+        #dt = randint(0, 3)
+        dt = 1
         time.sleep(dt * time_unit)
+        print(t)
 
         # Atualiza a variável tempo considerando o intervalo de criação dos clientes:
         t += dt
+        
+
+    # Seta operating para Falso
+    for bank in banks: 
+        bank.operating = False
 
     # Finaliza todas as threads
     # TODO
+    for bank in banks:
+        bank.generator.join()
+        for processors in bank.payment_processors:
+            processors.join()
 
     # Termina simulação. Após esse print somente dados devem ser printados no console.
     LOGGER.info(f"A simulação chegou ao fim!\n")

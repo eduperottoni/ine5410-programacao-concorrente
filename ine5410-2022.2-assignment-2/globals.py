@@ -4,8 +4,8 @@ banks = []
 # Printar Logs de DEBUG no console?
 debug = False
 
-# Tempo total de simulação
-total_time = 1000
+# Tempo total de simulação - original = 1000
+total_time = 10
 
 # Unidade de tempo (quanto menor, mais rápida a simulação)
-time_unit = 0.1  # 0.1 = 100ms
+time_unit = 1  # 0.1 = 100ms

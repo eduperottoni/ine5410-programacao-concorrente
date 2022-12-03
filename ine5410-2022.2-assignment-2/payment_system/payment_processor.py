@@ -44,20 +44,30 @@ class PaymentProcessor(Thread):
         # TODO: IMPLEMENTE/MODIFIQUE O CÓDIGO NECESSÁRIO ABAIXO !
 
         LOGGER.info(f"Inicializado o PaymentProcessor {self._id} do Banco {self.bank._id}!")
-        queue = banks[self.bank._id].transaction_queue
+        queue = self.bank.transaction_queue
 
-        while True:
+        while self.bank.operating:
             try:
+
+                #SEMÁFORO QUE CONTA QUANTIDADE DE TRANSACOES NA FILA (EVITA ESPERA OCUPADA)
+                #PROBLEMA: 2 PAYMENT_PROCESSORS PEGANDO A MESMA TRANSACTION
+
                 transaction = queue.pop()
-                LOGGER.info(f"Transaction_queue do Banco {self.bank._id}: {queue}")
+                #LOGGER.info(f"Transaction_queue do Banco {self.bank._id}: {queue}")
             except Exception as err:
                 LOGGER.error(f"Falha em PaymentProcessor.run(): {err}")
             else:
-                self.process_transaction(transaction)
-            time.sleep(3 * time_unit)  # Remova esse sleep após implementar sua solução!
+                status = self.process_transaction(transaction)
+                print(status)
+            #time.sleep(3 * time_unit)  # Remova esse sleep após implementar sua solução!
 
-        LOGGER.info(f"O PaymentProcessor {self._id} do banco {self._bank_id} foi finalizado.")
+        LOGGER.info(f"O PaymentProcessor {self._id} do banco {self.bank._id} foi finalizado.")
 
+    def __process_national_transaction(self, transaction: Transaction) -> TransactionStatus:
+        # chama withdraw da conta origem e deposita na destino
+
+    def __process_international_transaction(self, transaction: Transaction) -> TransactionStatus:
+        # 
 
     def process_transaction(self, transaction: Transaction) -> TransactionStatus:
         """
@@ -68,6 +78,8 @@ class PaymentProcessor(Thread):
         Ela deve retornar o status da transacão processada.
         """
         # TODO: IMPLEMENTE/MODIFIQUE O CÓDIGO NECESSÁRIO ABAIXO !
+
+        # SE FOR O MESMO BANCO CHAMA O NATIONAL, SE NAO O INTERNARIONAL
 
         LOGGER.info(f"PaymentProcessor {self._id} do Banco {self.bank._id} iniciando processamento da Transaction {transaction._id}!")
         
