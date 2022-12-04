@@ -98,7 +98,7 @@ class CurrencyReserves:
     para câmbio e transferências internacionais.
     OBS: NÃO É PERMITIDO ALTERAR ESSA CLASSE!
     """
-
+    
     USD: Account = Account(_id=1, _bank_id=0, currency=Currency.USD)
     EUR: Account = Account(_id=2, _bank_id=0, currency=Currency.EUR)
     GBP: Account = Account(_id=3, _bank_id=0, currency=Currency.GBP)

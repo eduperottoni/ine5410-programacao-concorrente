@@ -44,17 +44,24 @@ class TransactionGenerator(Thread):
 
         LOGGER.info(f"Inicializado TransactionGenerator para o Banco Nacional {self.bank._id}!")
 
-        i = 0
+        i = 0   
         while self.bank.operating:
+
             origin = (self.bank._id, randint(1, len(self.bank.accounts)))
             destination_bank_id = randint(0, 5)
             destination = (destination_bank_id, randint(1, len(banks[destination_bank_id].accounts)))
+
             if (origin == destination):
                 continue
-            amount = randint(100, 1000000)
+            
+            amount = randint(100, 1000)
             new_transaction = Transaction(i, origin, destination, amount, currency=Currency(destination_bank_id+1))
+            
             banks[self.bank._id].transaction_queue.append(new_transaction)
-            i=+1
+            #print(f'COLOCOU A TRANSACAO {new_transaction._id} NO BANCO {self.bank._id}. CONTA DE DESTINO = {destination[1]}. CONTA DE ORIGEM = {origin[1]}. ')
+            LOGGER.info(f"Transaction_queue do Banco {self.bank._id}: {len(banks[self.bank._id].transaction_queue)}")
+            queue_sems[self.bank._id].release()
+            i+=1
             time.sleep(0.2 * time_unit)
 
         LOGGER.info(f"O TransactionGenerator {self._id} do banco {self.bank._id} foi finalizado.")

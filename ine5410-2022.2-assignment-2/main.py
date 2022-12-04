@@ -1,6 +1,7 @@
 import argparse, time, sys
 from logging import INFO, DEBUG
 from random import randint
+from threading import Semaphore, Lock
 
 from globals import *
 from payment_system.bank import Bank
@@ -8,6 +9,7 @@ from payment_system.payment_processor import PaymentProcessor
 from payment_system.transaction_generator import TransactionGenerator
 from utils.currency import Currency
 from utils.logger import CH, LOGGER
+
 
 
 if __name__ == "__main__":
@@ -65,7 +67,17 @@ if __name__ == "__main__":
 
         # Seta operando como True 
         bank.operating = True
+    
+    #Inicializa lista de semáforos
+    for _ in range(len(banks)):
+        queue_sems.append(Semaphore(0))
+    print(queue_sems)
 
+    #Gera contas para cada banco
+    for bank in banks:
+        for _ in range(100):
+            bank.new_account(randint(0, 1000), randint(0, 1000))
+    
     # Inicializa gerador de transações e processadores de pagamentos para os Bancos Nacionais:
     for i, bank in enumerate(banks):
         # Inicializa um TransactionGenerator thread por banco:
@@ -90,6 +102,7 @@ if __name__ == "__main__":
 
         # Atualiza a variável tempo considerando o intervalo de criação dos clientes:
         t += dt
+        print(t)
         
 
     # Seta operating para Falso
