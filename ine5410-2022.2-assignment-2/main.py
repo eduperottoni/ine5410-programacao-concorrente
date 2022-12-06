@@ -67,11 +67,6 @@ if __name__ == "__main__":
 
         # Seta operando como True 
         bank.operating = True
-    
-    #Inicializa lista de semáforos
-    for _ in range(len(banks)):
-        queue_sems.append(Semaphore(0))
-    print(queue_sems)
 
     #Gera contas para cada banco
     for bank in banks:

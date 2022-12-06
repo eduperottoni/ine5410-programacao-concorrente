@@ -4,6 +4,7 @@ from payment_system.account import Account, CurrencyReserves
 from utils.transaction import Transaction
 from utils.currency import Currency
 from utils.logger import LOGGER
+from threading import Semaphore, Lock
 
 
 class Bank():
@@ -27,6 +28,10 @@ class Bank():
         Lista contendo as contas bancárias dos clientes do banco.
     transaction_queue : Queue[Transaction]
         Fila FIFO contendo as transações bancárias pendentes que ainda serão processadas.
+    transact_queue_sem: Semaphore()
+        Semáforo que conta quantidade de transações na fila
+    transact_queue_lock: Lock()
+        Lock que protege a fila inteira
 
     Métodos
     -------
@@ -48,7 +53,8 @@ class Bank():
         self.transaction_queue  = []
         self.generator = None
         self.payment_processors = []
-
+        self.transact_queue_sem = Semaphore(0)
+        self.transact_queue_lock = Lock()
 
     def new_account(self, balance: int = 0, overdraft_limit: int = 0) -> None:
         """

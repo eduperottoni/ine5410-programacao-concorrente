@@ -60,7 +60,7 @@ class TransactionGenerator(Thread):
             banks[self.bank._id].transaction_queue.append(new_transaction)
             #print(f'COLOCOU A TRANSACAO {new_transaction._id} NO BANCO {self.bank._id}. CONTA DE DESTINO = {destination[1]}. CONTA DE ORIGEM = {origin[1]}. ')
             LOGGER.info(f"Transaction_queue do Banco {self.bank._id}: {len(banks[self.bank._id].transaction_queue)}")
-            queue_sems[self.bank._id].release()
+            #self.bank.transact_queue_sem.release()
             i+=1
             time.sleep(0.2 * time_unit)
 

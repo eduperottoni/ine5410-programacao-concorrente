@@ -2,6 +2,7 @@ from dataclasses import dataclass
 
 from utils.currency import Currency
 from utils.logger import LOGGER
+from threading import Lock
 
 
 @dataclass
@@ -24,6 +25,8 @@ class Account:
         Saldo da conta bancária.
     overdraft_limit : int
         Limite de cheque especial da conta bancária.
+    account_lock: Lock()
+        Lock que protege a conta
 
     Métodos
     -------
@@ -40,6 +43,7 @@ class Account:
     currency: Currency
     balance: int = 0
     overdraft_limit: int = 0
+    account_lock = Lock()
 
     def info(self) -> None:
         """
@@ -67,6 +71,9 @@ class Account:
 
     def withdraw(self, amount: int) -> bool:
         """
+        O atributo overdraft_limit é informativo e os descontos devem ser feitos todos no balance. O balance pode ficar negativado no máximo até o valor do overdraft_limit. Detalhe: o usuário precisa ter limite para pagar tanto a transferência que deseja realizar + as taxas, caso contrário não poderá ser realizada a transferência."""
+
+        """
         Esse método deverá retirar o valor `amount` especificado do saldo da conta bancária (`balance`).
         Deverá ser retornado um valor bool indicando se foi possível ou não realizar a retirada.
         Lembre-se que esse método pode ser chamado concorrentemente por múltiplos PaymentProcessors, 
@@ -79,17 +86,16 @@ class Account:
             LOGGER.info(f"withdraw({amount}) successful!")
             return True
         else:
-            overdrafted_amount = abs(self.balance - amount)
+            #Recorre ao cheque especial
+            overdrafted_amount = abs(self.balance - (amount*0.05+amount))
             if self.overdraft_limit >= overdrafted_amount:
                 # Taxa sobre o valor do cheque especial
-                overdrafted_tax = 0.05 * overdrafted_amount
-                self.balance -= (amount + overdrafted_tax)
+                self.balance -= (amount*0.05+amount)
                 LOGGER.info(f"withdraw({amount}) successful with overdraft!")
                 return True
             else:
                 LOGGER.warning(f"withdraw({amount}) failed, no balance!")
                 return False
-
 
 @dataclass
 class CurrencyReserves:

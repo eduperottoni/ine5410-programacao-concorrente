@@ -5,10 +5,7 @@ banks = []
 debug = False
 
 # Tempo total de simulação - original = 1000
-total_time = 50
+total_time = 10
 
 # Unidade de tempo (quanto menor, mais rápida a simulação)
 time_unit = 1  # 0.1 = 100ms
-
-# Fila de Semáforos contadores com quantidade de transações na fila de cada banco
-queue_sems = []

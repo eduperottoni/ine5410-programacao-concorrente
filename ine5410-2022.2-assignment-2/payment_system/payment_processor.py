@@ -52,10 +52,13 @@ class PaymentProcessor(Thread):
             try:
 
                 #SEMÁFORO QUE CONTA QUANTIDADE DE TRANSACOES NA FILA (EVITA ESPERA OCUPADA)
+                self.bank.transact_queue_sem.acquire()
+
                 #PROBLEMA: 2 PAYMENT_PROCESSORS PEGANDO A MESMA TRANSACTION
-                queue_sems[self.bank._id].acquire()
-                
+                self.bank.transact_queue_lock.acquire()
                 transaction = queue.pop(0)
+                self.bank.transact_queue_lock.release()
+
                 print(f'RETIROU UMA TRANSACAO {transaction._id} DO BANCO {self.bank._id}. origem = {transaction.origin[1]}. destino = {transaction.destination[1]}')
                 LOGGER.info(f"Transaction_queue do Banco {self.bank._id}: {len(queue)}")
                 
@@ -72,9 +75,16 @@ class PaymentProcessor(Thread):
         # chama withdraw da conta origem e deposita na destino
         origin_account = self.bank.accounts[transaction.origin[1] - 1]
         destination_account = self.bank.accounts[transaction.destination[1] - 1]
+        # LOCK
+        origin_account.account_lock.acquire()
         success = origin_account.withdraw(transaction.amount)
+        origin_account.account_lock.release()
         if success:
+            # LOCK
+            destination_account.account_lock.acquire()
             destination_account.deposit(transaction.amount)
+            destination_account.account_lock.release()
+
             transaction.set_status(TransactionStatus.SUCCESSFUL)
         else:
             # LOGGER.error(f"Erro na Transação Nacional do banco {self.bank._id}")
@@ -83,34 +93,64 @@ class PaymentProcessor(Thread):
         
     def __process_international_transaction(self, transaction: Transaction) -> TransactionStatus:
         origin_account = self.bank.accounts[transaction.origin[1] - 1]
-
-        success = origin_account.withdraw(transaction.amount)
+        
+        origin = self.bank.currency     #Currency.BRL (banco 0)
+        destin = transaction.currency   #Currency.USD (banco 1)
+        exch_rate = get_exchange_rate(destin, origin)
+        # grana em BRL
+        converted_amount = transaction.amount * exch_rate
+        tax = converted_amount * 0.01
+        
+        # LOCK 
+        origin_account.account_lock.acquire()
+        success = origin_account.withdraw(converted_amount + tax)
+        origin_account.account_lock.release()
 
         if success:
-            f = self.bank.currency  #Currency.BRL
-            t = transaction.currency
-            exch_rate = get_exchange_rate(f, t)
-            converted_amount = transaction.amount * exch_rate
             
             origin_reserve_acc = self.bank.reserves.BRL
             #caso seja USD
-            if t == Currency.USD:
+            if origin == Currency.USD:
                 origin_reserve_acc = self.bank.reserves.USD
-            elif t == Currency.EUR:
+            elif origin == Currency.EUR:
                 origin_reserve_acc = self.bank.reserves.EUR
-            elif t == Currency.GBP:
+            elif origin == Currency.GBP:
                 origin_reserve_acc = self.bank.reserves.GBP
-            elif t == Currency.JPY:
+            elif origin == Currency.JPY:
                 origin_reserve_acc = self.bank.reserves.JPY
-            elif t == Currency.CHF:
+            elif origin == Currency.CHF:
                 origin_reserve_acc = self.bank.reserves.CHF
+            
+            # LOCK 
+            origin_reserve_acc.account_lock.acquire()
+            origin_reserve_acc.deposit(converted_amount + tax)
+            origin_reserve_acc.account_lock.release()
 
-            origin_reserve_acc.deposit(converted_amount)
-
-            origin_reserve_acc.withdraw(0.99 * converted_amount)
+            destin_reserve_acc = self.bank.reserves.BRL
+        
+            #caso seja USD
+            if destin == Currency.USD:
+                destin_reserve_acc = self.bank.reserves.USD
+            elif destin == Currency.EUR:
+                destin_reserve_acc = self.bank.reserves.EUR
+            elif destin == Currency.GBP:
+                destin_reserve_acc = self.bank.reserves.GBP
+            elif destin == Currency.JPY:
+                destin_reserve_acc = self.bank.reserves.JPY
+            elif destin == Currency.CHF:
+                destin_reserve_acc = self.bank.reserves.CHF
+            #LOCK
+            destin_reserve_acc.account_lock.acquire()
+            destin_reserve_acc.withdraw(transaction.amount)
+            destin_reserve_acc.account_lock.release()
 
             destination_account = banks[transaction.destination[0]].accounts[transaction.destination[1] - 1]
-            destination_account.deposit(0.99 * converted_amount)
+
+            # LOCK
+            destination_account.account_lock.acquire()
+            destination_account.deposit(transaction.amount)
+            destination_account.account_lock.release()
+
             transaction.set_status(TransactionStatus.SUCCESSFUL)
         else:
             transaction.set_status(TransactionStatus.FAILED)
