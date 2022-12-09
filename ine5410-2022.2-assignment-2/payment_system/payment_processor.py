@@ -75,16 +75,10 @@ class PaymentProcessor(Thread):
         # chama withdraw da conta origem e deposita na destino
         origin_account = self.bank.accounts[transaction.origin[1] - 1]
         destination_account = self.bank.accounts[transaction.destination[1] - 1]
-        # LOCK
-        origin_account.account_lock.acquire()
+    
         success = origin_account.withdraw(transaction.amount)
-        origin_account.account_lock.release()
         if success:
-            # LOCK
-            destination_account.account_lock.acquire()
             destination_account.deposit(transaction.amount)
-            destination_account.account_lock.release()
-
             transaction.set_status(TransactionStatus.SUCCESSFUL)
         else:
             # LOGGER.error(f"Erro na Transação Nacional do banco {self.bank._id}")
@@ -97,17 +91,16 @@ class PaymentProcessor(Thread):
         origin = self.bank.currency     #Currency.BRL (banco 0)
         destin = transaction.currency   #Currency.USD (banco 1)
         exch_rate = get_exchange_rate(destin, origin)
+
         # grana em BRL
         converted_amount = transaction.amount * exch_rate
         tax = converted_amount * 0.01
         
-        # LOCK 
-        origin_account.account_lock.acquire()
         success = origin_account.withdraw(converted_amount + tax)
+        #Release
         origin_account.account_lock.release()
 
         if success:
-            
             origin_reserve_acc = self.bank.reserves.BRL
             #caso seja USD
             if origin == Currency.USD:
@@ -121,13 +114,13 @@ class PaymentProcessor(Thread):
             elif origin == Currency.CHF:
                 origin_reserve_acc = self.bank.reserves.CHF
             
-            # LOCK 
-            origin_reserve_acc.account_lock.acquire()
             origin_reserve_acc.deposit(converted_amount + tax)
+            
+            #Release
             origin_reserve_acc.account_lock.release()
-
+            
             destin_reserve_acc = self.bank.reserves.BRL
-        
+
             #caso seja USD
             if destin == Currency.USD:
                 destin_reserve_acc = self.bank.reserves.USD
@@ -139,20 +132,25 @@ class PaymentProcessor(Thread):
                 destin_reserve_acc = self.bank.reserves.JPY
             elif destin == Currency.CHF:
                 destin_reserve_acc = self.bank.reserves.CHF
-            #LOCK
-            destin_reserve_acc.account_lock.acquire()
-            destin_reserve_acc.withdraw(transaction.amount)
-            destin_reserve_acc.account_lock.release()
 
             destination_account = banks[transaction.destination[0]].accounts[transaction.destination[1] - 1]
 
-            # LOCK
-            destination_account.account_lock.acquire()
+            if (destin_reserve_acc._id < destination_account._id): 
+                destin_reserve_acc.account_lock.acquire()
+                destination_account.account_lock.acquire()
+            else:
+                destination_account.account_lock.acquire()
+                destin_reserve_acc.account_lock.acquire()
+            
+            destin_reserve_acc.withdraw(transaction.amount)
             destination_account.deposit(transaction.amount)
+
+            destin_reserve_acc.account_lock.release()
             destination_account.account_lock.release()
 
             transaction.set_status(TransactionStatus.SUCCESSFUL)
         else:
+            origin_reserve_acc.deposit(converted_amount + tax)
             transaction.set_status(TransactionStatus.FAILED)
         
         return transaction.status
@@ -171,12 +169,50 @@ class PaymentProcessor(Thread):
         
         print(f'CONTA DE ORIGEM: {self.bank.accounts[transaction.origin[1] - 1].balance}')
         print(f'QUANTO QUER TIRAR: {transaction.amount}')
+        
+        origin_acc = self.bank.accounts[transaction.origin[1] - 1]
+        destin_acc = banks[transaction.destination[0]].accounts[transaction.destination[1] - 1]
+        
         # Se a transação é nacional ou internacional
         if (transaction.origin[0] == transaction.destination[0]):
+            if (origin_acc._id < destin_acc._id):
+                print(f'{self._id} : {self.bank._id} AQUI 1 =======================================================')
+                origin_acc.account_lock.acquire()
+                print(f'{self._id} : {self.bank._id} AQUI 2  =======================================================')
+                destin_acc.account_lock.acquire()
+            else:
+                destin_acc.account_lock.acquire()
+                print(f'{self._id} : {self.bank._id} AQUI 3  =======================================================')
+                origin_acc.account_lock.acquire()
+                print(f'{self._id} : {self.bank._id} AQUI 4  =======================================================')
             status = self.__process_national_transaction(transaction)
+
+            destin_acc.account_lock.release()
+            origin_acc.account_lock.release()
         else:
-            status = self.__process_international_transaction(transaction)
-        
+        #     origin = self.bank.currency
+        #     bank_reserve_acc = self.bank.reserves.BRL
+        #     if origin == Currency.USD:
+        #         bank_reserve_acc = self.bank.reserves.USD
+        #     elif origin == Currency.EUR:
+        #         bank_reserve_acc = self.bank.reserves.EUR
+        #     elif origin == Currency.GBP:
+        #         bank_reserve_acc = self.bank.reserves.GBP
+        #     elif origin == Currency.JPY:
+        #         bank_reserve_acc = self.bank.reserves.JPY
+        #     elif origin == Currency.CHF:
+        #         bank_reserve_acc = self.bank.reserves.CHF
+
+        #     if(origin_acc._id < bank_reserve_acc._id):
+        #         origin_acc.account_lock.acquire()
+        #         bank_reserve_acc.account_lock.acquire()
+        #     else:
+        #         origin_acc.account_lock.acquire()
+        #         bank_reserve_acc.account_lock.acquire()
+            status = True
+        #     status = self.__process_international_transaction(transaction)
+
+
         # NÃO REMOVA ESSE SLEEP!
         # Ele simula uma latência de processamento para a transação.
         time.sleep(3 * time_unit)
