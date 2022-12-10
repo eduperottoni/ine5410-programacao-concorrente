@@ -38,12 +38,13 @@ class Account:
         Remove o valor `amount` do saldo da conta bancária.
     """
 
-    _id: int
-    _bank_id: int
-    currency: Currency
-    balance: int = 0
-    overdraft_limit: int = 0
-    account_lock = Lock()
+    def __init__(self, _id: int, _bank_id: int, currency: Currency, balance : int = 0, overdraft_limit : int = 0):
+        self._id = _id
+        self._bank_id = _bank_id
+        self.currency = currency
+        self.balance = balance
+        self.overdraft_limit = overdraft_limit
+        self.account_lock = Lock()
 
     def info(self) -> None:
         """
