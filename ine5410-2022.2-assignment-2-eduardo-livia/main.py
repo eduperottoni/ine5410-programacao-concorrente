@@ -83,7 +83,7 @@ if __name__ == "__main__":
 
         # Inicializa um PaymentProcessor thread por banco.
         # Sua solução completa deverá funcionar corretamente com múltiplos PaymentProcessor threads para cada banco.
-        for j in range(10):
+        for j in range(8):
             payment_proc = PaymentProcessor(_id=j, bank=bank)
             bank.payment_processors.append(payment_proc)
             payment_proc.start()
@@ -93,11 +93,9 @@ if __name__ == "__main__":
         # Aguarda um tempo aleatório antes de criar o próximo cliente:
         dt = randint(0, 3)
         time.sleep(dt * time_unit)
-        print(t)
 
         # Atualiza a variável tempo considerando o intervalo de criação dos clientes:
         t += dt
-        print(t)
         
 
     # Seta operating para Falso
@@ -111,8 +109,20 @@ if __name__ == "__main__":
         for processors in bank.payment_processors:
             processors.join()
 
+    
+    total_time_processing = 0
+    total_transact_processed = 0
+    total_not_processed = 0
+        
     for bank in banks:
+        total_time_processing += bank.count_total_processing_time
+        total_transact_processed += bank.count_processed
+        total_not_processed += len(bank.transaction_queue)
         bank.info()
+    
+    LOGGER.info(f'Média de tempo na fila das thread que foram processadas: {total_time_processing / total_transact_processed} seconds')
+    LOGGER.info(f'Número de transações não processadas: {total_not_processed} transações')
+
     
     # Termina simulação. Após esse print somente dados devem ser printados no console.
     LOGGER.info(f"A simulação chegou ao fim!\n")

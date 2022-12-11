@@ -42,8 +42,14 @@ class Bank():
         Conta lucro do banco com taxas de câmbio e juros de cheques 
     count_profit_lock = Lock()
         Mutex para proteger o contador de lucro
-    self.account_generator = Thread()
+    account_generator = Thread()
         Thread que cria as contas do banco
+    count_processed = int
+        Indica quantas transações foram processadas
+    count_processed_lock() = Lock()
+        Lock para contagem de transações procesadas
+    count_total_processing_time = int
+        Tempo total de processamento das transações do banco
 
     
     Métodos
@@ -75,6 +81,9 @@ class Bank():
         self.count_international_transact = 0
         self.count_profit = 0
         self.count_profit_lock = Lock()
+        self.count_processed = 0
+        self.count_processed_lock = Lock()
+        self.count_total_processing_time = 0
 
     def new_account(self, balance: int = 0, overdraft_limit: int = 0) -> None:
         """

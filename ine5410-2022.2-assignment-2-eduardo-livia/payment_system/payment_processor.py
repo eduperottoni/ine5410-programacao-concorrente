@@ -183,6 +183,11 @@ class PaymentProcessor(Thread):
             status = self.__process_national_transaction(transaction)
         else:
             status = self.__process_international_transaction(transaction)
+
+        self.bank.count_processed_lock.acquire()
+        self.bank.count_processed += 1
+        self.bank.count_total_processing_time += transaction.get_processing_time().total_seconds()
+        self.bank.count_processed_lock.release()
         
         # NÃO REMOVA ESSE SLEEP!
         # Ele simula uma latência de processamento para a transação.
