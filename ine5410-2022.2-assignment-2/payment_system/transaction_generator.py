@@ -57,9 +57,11 @@ class TransactionGenerator(Thread):
             amount = randint(100, 1000)
             new_transaction = Transaction(i, origin, destination, amount, currency=Currency(destination_bank_id+1))
             
-            banks[self.bank._id].transaction_queue.append(new_transaction)
-            #print(f'COLOCOU A TRANSACAO {new_transaction._id} NO BANCO {self.bank._id}. CONTA DE DESTINO = {destination[1]}. CONTA DE ORIGEM = {origin[1]}. ')
-            LOGGER.info(f"Transaction_queue do Banco {self.bank._id}: {len(banks[self.bank._id].transaction_queue)}")
+            self.bank.transact_queue_lock.acquire()
+            self.bank.transaction_queue.append(new_transaction)
+            self.bank.transact_queue_lock.release()
+
+            LOGGER.info(f"Tamanho da fila do Banco {self.bank._id}: {len(banks[self.bank._id].transaction_queue)}")
             self.bank.transact_queue_sem.release()
             i+=1
             time.sleep(0.2 * time_unit)

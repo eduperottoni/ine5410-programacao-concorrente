@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from utils.currency import Currency
 from utils.logger import LOGGER
 from threading import Lock
+from globals import banks
 
 
 @dataclass
@@ -88,11 +89,17 @@ class Account:
             return True
         else:
             #Recorre ao cheque especial
-            overdrafted_amount = abs(self.balance - (amount*0.05+amount))
+            tax = amount*0.05
+            overdrafted_amount = abs(self.balance - (tax + amount))
             if self.overdraft_limit >= overdrafted_amount:
                 # Taxa sobre o valor do cheque especial
-                self.balance -= (amount*0.05+amount)
+                self.balance -= (tax + amount)
                 LOGGER.info(f"withdraw({amount}) successful with overdraft!")
+
+                bank = banks[self._bank_id]
+                bank.count_profit_lock.acquire()
+                bank.count_profit += tax
+                bank.count_profit_lock.release()
                 return True
             else:
                 LOGGER.warning(f"withdraw({amount}) failed, no balance!")

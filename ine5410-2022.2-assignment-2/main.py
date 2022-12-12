@@ -8,6 +8,7 @@ from payment_system.bank import Bank
 from payment_system.payment_processor import PaymentProcessor
 from payment_system.transaction_generator import TransactionGenerator
 from utils.currency import Currency
+from payment_system.account_generator import AccountGenerator
 from utils.logger import CH, LOGGER
 
 
@@ -70,8 +71,9 @@ if __name__ == "__main__":
 
     #Gera contas para cada banco
     for bank in banks:
-        for _ in range(100):
-            bank.new_account(randint(0, 1000), randint(0, 1000))
+        bank.account_generator = AccountGenerator(0, bank, 100, 1000, 1000)
+        bank.account_generator.start()
+
     
     # Inicializa gerador de transações e processadores de pagamentos para os Bancos Nacionais:
     for i, bank in enumerate(banks):
@@ -82,7 +84,7 @@ if __name__ == "__main__":
 
         # Inicializa um PaymentProcessor thread por banco.
         # Sua solução completa deverá funcionar corretamente com múltiplos PaymentProcessor threads para cada banco.
-        for j in range(2):
+        for j in range(n_processors):
             payment_proc = PaymentProcessor(_id=j, bank=bank)
             bank.payment_processors.append(payment_proc)
             payment_proc.start()
@@ -90,17 +92,13 @@ if __name__ == "__main__":
     # Enquanto o tempo total de simuação não for atingido:
     while t < total_time:
         # Aguarda um tempo aleatório antes de criar o próximo cliente:
-        #dt = randint(0, 3)
-        dt = 1
+        dt = randint(0, 3)
         time.sleep(dt * time_unit)
-        print(t)
-
         # Atualiza a variável tempo considerando o intervalo de criação dos clientes:
         t += dt
-        print(t)
-        
 
-    # Seta operating para Falso
+
+    # Seta operating para Falso - Término da simulação
     for bank in banks: 
         bank.operating = False
 
@@ -108,8 +106,28 @@ if __name__ == "__main__":
     # TODO
     for bank in banks:
         bank.generator.join()
-        for processors in bank.payment_processors:
-            processors.join()
+        # alguns releases para garantir que nenhum processor ficará trancado nos semáforos das filas
+        for processor in bank.payment_processors:
+            bank.transact_queue_sem.release()
+        for processor in bank.payment_processors:
+            processor.join()
 
     # Termina simulação. Após esse print somente dados devem ser printados no console.
     LOGGER.info(f"A simulação chegou ao fim!\n")
+
+    total_time_processing = 0
+    total_transact_processed = 0
+    total_not_processed = 0
+
+    #calcula tempos totais para todos os bancos e não processadas
+    for bank in banks:
+        total_time_processing += bank.count_total_processing_time
+        total_transact_processed += bank.count_processed
+        total_not_processed += len(bank.transaction_queue)
+        bank.info()
+
+    LOGGER.info(f'| Tempo médio de fila das transações processadas: {total_time_processing / total_transact_processed} seconds')
+    LOGGER.info(f'| Transações processadas: {total_transact_processed} transações')
+    LOGGER.info(f'| Transações não processadas: {total_not_processed} transações')
+
+    

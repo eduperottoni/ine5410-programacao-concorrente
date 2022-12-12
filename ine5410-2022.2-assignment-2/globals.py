@@ -5,7 +5,10 @@ banks = []
 debug = False
 
 # Tempo total de simulação - original = 1000
-total_time = 50
+total_time = 250
 
 # Unidade de tempo (quanto menor, mais rápida a simulação)
-time_unit = 1  # 0.1 = 100ms
+time_unit = 0.1  # 0.1 = 100ms
+
+# Número de payment_processors por banco
+n_processors = 10

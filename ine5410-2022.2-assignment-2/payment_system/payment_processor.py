@@ -53,20 +53,21 @@ class PaymentProcessor(Thread):
 
                 #SEMÁFORO QUE CONTA QUANTIDADE DE TRANSACOES NA FILA (EVITA ESPERA OCUPADA)
                 self.bank.transact_queue_sem.acquire()
+                if not self.bank.operating:
+                    break
 
-                #PROBLEMA: 2 PAYMENT_PROCESSORS PEGANDO A MESMA TRANSACTION
+                #lOCK QUE EVITA QUE DOIS PAYMENT_PROCESSORS PEGUEM A MESMA TRANSACTION
                 self.bank.transact_queue_lock.acquire()
                 transaction = queue.pop(0)
                 self.bank.transact_queue_lock.release()
 
-                print(f'RETIROU UMA TRANSACAO {transaction._id} DO BANCO {self.bank._id}. origem = {transaction.origin[1]}. destino = {transaction.destination[1]}')
                 LOGGER.info(f"Transaction_queue do Banco {self.bank._id}: {len(queue)}")
                 
             except Exception as err:
                 LOGGER.error(f"Falha em PaymentProcessor.run(): {err}")
             else:
                 status = self.process_transaction(transaction)
-                print(status)
+                LOGGER.info(f'Transação {transaction._id} do banco {self.bank._id} processada! Status: {transaction.status}')
             #time.sleep(3 * time_unit)  # Remova esse sleep após implementar sua solução!
 
         LOGGER.info(f"O PaymentProcessor {self._id} do banco {self.bank._id} foi finalizado.")
@@ -80,8 +81,11 @@ class PaymentProcessor(Thread):
         if success:
             destination_account.deposit(transaction.amount)
             transaction.set_status(TransactionStatus.SUCCESSFUL)
+
+            self.bank.count_national_transact_lock.acquire()
+            self.bank.count_national_transact += 1
+            self.bank.count_national_transact_lock.release()
         else:
-            # LOGGER.error(f"Erro na Transação Nacional do banco {self.bank._id}")
             transaction.set_status(TransactionStatus.FAILED)
         return transaction.status
         
@@ -101,7 +105,7 @@ class PaymentProcessor(Thread):
         origin_account.account_lock.release()
 
         origin_reserve_acc = self.bank.reserves.BRL
-            #caso seja USD
+        #caso seja USD
         if origin == Currency.USD:
             origin_reserve_acc = self.bank.reserves.USD
         elif origin == Currency.EUR:
@@ -114,8 +118,11 @@ class PaymentProcessor(Thread):
             origin_reserve_acc = self.bank.reserves.CHF
 
         if success:
+            self.bank.count_profit_lock.acquire()
+            self.bank.count_profit += tax
+            self.bank.count_profit_lock.release()
+
             origin_reserve_acc.deposit(converted_amount + tax)
-            
             #Release
             origin_reserve_acc.account_lock.release()
             
@@ -149,6 +156,10 @@ class PaymentProcessor(Thread):
             destination_account.account_lock.release()
 
             transaction.set_status(TransactionStatus.SUCCESSFUL)
+
+            self.bank.count_international_transact_lock.acquire()
+            self.bank.count_international_transact += 1
+            self.bank.count_international_transact_lock.release()
         else:
             #Libera caso não possa tirar da conta de origem
             origin_reserve_acc.account_lock.release()
@@ -173,23 +184,15 @@ class PaymentProcessor(Thread):
         # destin_acc = banks[transaction.destination[0]].accounts[transaction.destination[1] - 1]
         destin_acc = self.bank.accounts[transaction.destination[1] - 1]
 
-        print(f'transaction origin : {origin_acc}')
-        print(f'transaction destin : {destin_acc}')
-
         # Se a transação é nacional ou internacional
         if (transaction.origin[0] == transaction.destination[0]):
-            print(f'transaction origin : {origin_acc} --')
-            print(f'transaction destin : {destin_acc} --')
+            #Ordenação global dos recursos
             if (origin_acc._id < destin_acc._id):
                 origin_acc.account_lock.acquire()
-                print(f'{self._id} : {self.bank._id} AQUI 1 ====================================================================================================')
                 destin_acc.account_lock.acquire()
-                print(f'{self._id} : {self.bank._id} AQUI 2  ===================================================================================================')
             else:
                 destin_acc.account_lock.acquire()
-                print(f'{self._id} : {self.bank._id} AQUI 3  ===================================================================================================')
                 origin_acc.account_lock.acquire()
-                print(f'{self._id} : {self.bank._id} AQUI 4  ===================================================================================================')
             status = self.__process_national_transaction(transaction)
 
             origin_acc.account_lock.release()
@@ -208,18 +211,24 @@ class PaymentProcessor(Thread):
             elif origin == Currency.CHF:
                 bank_reserve_acc = self.bank.reserves.CHF
 
+            #Pega conta de origem e reserva do banco de origem
             if(origin_acc._id < bank_reserve_acc._id):
                 origin_acc.account_lock.acquire()
                 bank_reserve_acc.account_lock.acquire()
             else:
-                origin_acc.account_lock.acquire()
                 bank_reserve_acc.account_lock.acquire()
+                origin_acc.account_lock.acquire()
+
             status = self.__process_international_transaction(transaction)
 
+        #Conta transações processadas e tempo de processamento das mesmas
+        self.bank.count_processed_lock.acquire()
+        self.bank.count_processed += 1
+        self.bank.count_total_processing_time += transaction.get_processing_time().total_seconds()
+        self.bank.count_processed_lock.release()
 
         # NÃO REMOVA ESSE SLEEP!
         # Ele simula uma latência de processamento para a transação.
         time.sleep(3 * time_unit)
         
-        #transaction.set_status(TransactionStatus.SUCCESSFUL)
         return status
