@@ -61,7 +61,7 @@ class PaymentProcessor(Thread):
                 transaction = queue.pop(0)
                 self.bank.transact_queue_lock.release()
 
-                LOGGER.info(f"Transaction_queue do Banco {self.bank._id}: {len(queue)}")
+                LOGGER.info(f"Transaction_queue do Banco {self.bank._id}: {len(queue)} contas")
                 
             except Exception as err:
                 LOGGER.error(f"Falha em PaymentProcessor.run(): {err}")

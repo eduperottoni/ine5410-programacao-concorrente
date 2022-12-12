@@ -126,8 +126,9 @@ if __name__ == "__main__":
         total_not_processed += len(bank.transaction_queue)
         bank.info()
 
+    LOGGER.info(f'=== ESTATÍSTICAS GERAIS DA SIMULAÇÃO ===')
     LOGGER.info(f'| Tempo médio de fila das transações processadas: {total_time_processing / total_transact_processed} seconds')
-    LOGGER.info(f'| Transações processadas: {total_transact_processed} transações')
-    LOGGER.info(f'| Transações não processadas: {total_not_processed} transações')
+    LOGGER.info(f'| Total de Transações processadas: {total_transact_processed} transações')
+    LOGGER.info(f'| Total de Transações não processadas: {total_not_processed} transações')
 
     
