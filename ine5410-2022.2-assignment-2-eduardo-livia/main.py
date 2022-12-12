@@ -71,7 +71,7 @@ if __name__ == "__main__":
 
     #Gera contas para cada banco
     for bank in banks:
-        bank.account_generator = AccountGenerator(0, bank, 100, 1000, 1000)
+        bank.account_generator = AccountGenerator(0, bank, max_accounts, max_overdraft_limit, max_balance)
         bank.account_generator.start()
     
     # Inicializa gerador de transações e processadores de pagamentos para os Bancos Nacionais:
@@ -83,7 +83,7 @@ if __name__ == "__main__":
 
         # Inicializa um PaymentProcessor thread por banco.
         # Sua solução completa deverá funcionar corretamente com múltiplos PaymentProcessor threads para cada banco.
-        for j in range(8):
+        for j in range(n_processors):
             payment_proc = PaymentProcessor(_id=j, bank=bank)
             bank.payment_processors.append(payment_proc)
             payment_proc.start()
@@ -106,10 +106,15 @@ if __name__ == "__main__":
     # TODO
     for bank in banks:
         bank.transaction_generator.join()
+        # alguns releases para garantir que nenhum processor ficará trancado nos semáforos das filas
+        for processor in bank.payment_processors:
+            bank.transact_queue_sem.release()
         for processors in bank.payment_processors:
             processors.join()
 
-    
+    # Termina simulação. Após esse print somente dados devem ser printados no console.
+    LOGGER.info(f"A simulação chegou ao fim!\n")
+
     total_time_processing = 0
     total_transact_processed = 0
     total_not_processed = 0
@@ -120,9 +125,11 @@ if __name__ == "__main__":
         total_not_processed += len(bank.transaction_queue)
         bank.info()
     
-    LOGGER.info(f'Média de tempo na fila das thread que foram processadas: {total_time_processing / total_transact_processed} seconds')
-    LOGGER.info(f'Número de transações não processadas: {total_not_processed} transações')
+    LOGGER.info(f'=== ESTATÍSTICAS GERAIS DA SIMULAÇÃO ===')
+    LOGGER.info(f'| Tempo médio de fila das transações processadas: {total_time_processing / total_transact_processed} seconds')
+    LOGGER.info(f'| Transações processadas: {total_transact_processed} transações')
+    LOGGER.info(f'| Total de Transações não processadas: {total_not_processed} transações')
+    LOGGER.info('='* 80 + '\n')
 
     
-    # Termina simulação. Após esse print somente dados devem ser printados no console.
-    LOGGER.info(f"A simulação chegou ao fim!\n")
+

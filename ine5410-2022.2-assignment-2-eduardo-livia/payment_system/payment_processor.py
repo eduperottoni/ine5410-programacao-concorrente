@@ -53,6 +53,9 @@ class PaymentProcessor(Thread):
 
                 #SEMÁFORO QUE CONTA QUANTIDADE DE TRANSACOES NA FILA (EVITA ESPERA OCUPADA)
                 self.bank.transact_queue_sem.acquire()
+                # Caso o processor seja liberado quando a simulação estiver terminado
+                if not self.bank.operating:
+                    break
 
                 #PROBLEMA: 2 PAYMENT_PROCESSORS PEGANDO A MESMA TRANSACTION
                 self.bank.transact_queue_lock.acquire()
@@ -65,6 +68,7 @@ class PaymentProcessor(Thread):
                 LOGGER.error(f"Falha em PaymentProcessor.run(): {err}")
             else:
                 status = self.process_transaction(transaction)
+                LOGGER.info(f'Transação {transaction._id} do banco {self.bank._id} processada! Status: {transaction.status}')
             #time.sleep(3 * time_unit)  # Remova esse sleep após implementar sua solução!
 
         LOGGER.info(f"O PaymentProcessor {self._id} do banco {self.bank._id} foi finalizado.")

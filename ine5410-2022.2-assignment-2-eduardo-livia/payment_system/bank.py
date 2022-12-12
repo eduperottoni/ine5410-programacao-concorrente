@@ -66,7 +66,7 @@ class Bank():
     def __init__(self, _id: int, currency: Currency):
         self._id                = _id
         self.currency           = currency
-        self.reserves           = CurrencyReserves()
+        self.reserves           = CurrencyReserves(_id)
         self.operating          = False
         self.accounts           = []
         self.transaction_queue  = []
@@ -112,10 +112,10 @@ class Bank():
         5. Lucro do banco: taxas de câmbio acumuladas + juros de cheque especial acumulados
         """
         # TODO: IMPLEMENTE AS MODIFICAÇÕES, SE NECESSÁRIAS, NESTE MÉTODO!
-        print('=' * 80)
-        LOGGER.info(f"Estatísticas do Banco Nacional {self._id}:")
+        LOGGER.info('=' * 80)
+        LOGGER.info(f"=== ESTATÍSTICAS DO BANCO NACIONAL {self._id} | {Currency(self._id + 1)}===")
         print()
-        LOGGER.info(f"Saldo de cada moeda nas reservas internas do banco:")
+        LOGGER.info(f"=== SALDO DAS RESERVAS DO BANCO ===")
         LOGGER.info(f"| USD = {self.reserves.USD.balance}")
         LOGGER.info(f"| EUR = {self.reserves.EUR.balance}")
         LOGGER.info(f"| GBP = {self.reserves.GBP.balance}")
@@ -123,14 +123,15 @@ class Bank():
         LOGGER.info(f"| CHF = {self.reserves.CHF.balance}")
         LOGGER.info(f"| BRL = {self.reserves.BRL.balance}")
         print()
-        LOGGER.info(f"Número de transferências nacionais e internacionais realizadas:")
-        LOGGER.info(f"Quantidade de transações nacionais: {self.count_national_transact}")
-        LOGGER.info(f"Quantidade de transações internacionais: {self.count_international_transact}")
+        LOGGER.info(f"=== TRANSFERÊNCIAS ===")
+        LOGGER.info(f"| Transações nacionais: {self.count_national_transact}")
+        LOGGER.info(f"| Transações internacionais: {self.count_international_transact}")
         print()
-        LOGGER.info(f'Número de contas bancárias registradas no banco: {len(self.accounts)}')
-        LOGGER.info(f'Saldo das contas:')
+        LOGGER.info(f'CONTAS BANCÁRIAS REGISTRADAS NO BANCO: {len(self.accounts)}')
+        LOGGER.info(f'=== SALDO DAS CONTAS ===')
         for account in self.accounts:
             LOGGER.info(f'| Conta {account._id} = {account.balance}')
         print()
-        LOGGER.info(f'Lucro do banco: {self.count_profit}\n')
+        LOGGER.info(f'| LUCRO DO BANCO: {self.count_profit}\n')
+        LOGGER.info('=' * 80)
 

@@ -49,7 +49,8 @@ class AccountGenerator(Thread):
         LOGGER.info(f"Inicializado AccountGenerator para o Banco Nacional {self.bank._id}!")
 
         while self.bank.operating and len(self.bank.accounts) < self.max_account:
-            self.bank.new_account(randint(0, self.max_account), randint(0, self.max_ovdft_limit)) 
+            new_amount = randint(0, self.max_amount)
+            self.bank.new_account(new_amount, ovdft_limit_pct * new_amount) 
             LOGGER.info(f"Conta {len(self.bank.accounts)} criada para o Banco {self.bank._id}!")  
             time.sleep(0.2 * time_unit)
 
